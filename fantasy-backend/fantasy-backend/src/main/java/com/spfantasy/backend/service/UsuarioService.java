@@ -1,6 +1,7 @@
 package com.spfantasy.backend.service;
 
 import com.spfantasy.backend.config.JwtUtil;
+import com.spfantasy.backend.dto.UsuarioDTO;
 import com.spfantasy.backend.model.Jugador;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.model.Role;
@@ -23,10 +24,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 public class UsuarioService implements UserDetailsService {
 
     @Autowired
-    private UsuarioRepository usuarioRepository;
+    public UsuarioRepository usuarioRepository;
 
     @Autowired
-    private JugadorRepository jugadorRepository; // Asegúrate de inyectar el repositorio de jugadores
+    public JugadorRepository jugadorRepository; // Asegúrate de inyectar el repositorio de jugadores
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -142,8 +143,6 @@ public class UsuarioService implements UserDetailsService {
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRole().name()))
         );
     }
-    
-    
 
     public boolean guardarPlantilla(String username, List<Long> titularesIds, List<Long> suplentesIds) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
@@ -188,12 +187,22 @@ public class UsuarioService implements UserDetailsService {
 
     /**
      * Método para extraer el username desde un token JWT.
+     *
      * @param token el token JWT sin el prefijo "Bearer "
      * @return el username del usuario autenticado
      */
     public String obtenerUsernameDesdeToken(String token) {
         return jwtUtil.extractUsername(token);
     }
-    
-    
+
+    public List<UsuarioDTO> obtenerTodosComoDTO() {
+        return usuarioRepository.findAll().stream()
+                .map(u -> new UsuarioDTO(
+                u.getId(),
+                u.getUsername(),
+                u.getRole().name()
+        ))
+                .toList();
+    }
+
 }

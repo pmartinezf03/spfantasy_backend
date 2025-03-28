@@ -1,5 +1,6 @@
 package com.spfantasy.backend.controller;
 
+import com.spfantasy.backend.dto.MensajeDTO;
 import com.spfantasy.backend.model.Mensaje;
 import com.spfantasy.backend.service.MensajeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/mensajes")
@@ -35,4 +37,21 @@ public class MensajeController {
     public List<Mensaje> obtenerMensajesPrivados(@PathVariable Long usuario1Id, @PathVariable Long usuario2Id) {
         return mensajeService.obtenerMensajesPrivados(usuario1Id, usuario2Id);
     }
+
+    @GetMapping("/grupo/{grupoId}/dto")
+    public List<MensajeDTO> obtenerMensajesGrupoDTO(@PathVariable Long grupoId) {
+        return mensajeService.obtenerMensajesGrupoDTO(grupoId);
+    }
+
+    @GetMapping("/privado/{usuario1Id}/{usuario2Id}/dto")
+    public List<MensajeDTO> obtenerMensajesPrivadosDTO(@PathVariable Long usuario1Id, @PathVariable Long usuario2Id) {
+        return mensajeService.obtenerMensajesPrivadosDTO(usuario1Id, usuario2Id);
+    }
+
+    @GetMapping("/{usuarioId}/todos")
+    public ResponseEntity<?> obtenerTodosMisMensajesCompat(@PathVariable Long usuarioId) {
+        List<MensajeDTO> mensajes = mensajeService.obtenerTodosMisMensajes(usuarioId);
+        return ResponseEntity.ok(mensajes);
+    }
+
 }

@@ -32,4 +32,6 @@ public class Mensaje {
 
     @Column(nullable = false)
     private LocalDateTime timestamp = LocalDateTime.now(); // Marca de tiempo del mensaje
+    
+    
 }

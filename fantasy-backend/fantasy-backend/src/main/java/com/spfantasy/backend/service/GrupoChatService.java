@@ -54,4 +54,12 @@ public class GrupoChatService {
         grupo.getUsuarios().add(usuario);
         return grupoChatRepository.save(grupo);
     }
+
+    public List<GrupoChat> obtenerGruposDelUsuario(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        return grupoChatRepository.findByUsuariosContaining(usuario);
+    }
+
 }

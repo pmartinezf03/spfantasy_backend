@@ -5,6 +5,8 @@ import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.service.UsuarioService;
 import com.spfantasy.backend.config.JwtUtil;
 import com.spfantasy.backend.dto.JugadorDTO;
+import com.spfantasy.backend.dto.LoginResponseDTO;
+import com.spfantasy.backend.dto.UsuarioDTO;
 import com.spfantasy.backend.model.Role;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import java.math.BigDecimal;
@@ -47,14 +49,23 @@ public class UsuarioController {
         if (user != null && passwordEncoder.matches(usuario.getPassword(), user.getPassword())) {
             String token = jwtUtil.generateToken(user.getUsername());
 
+            LoginResponseDTO loginResponse = new LoginResponseDTO(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    token
+            );
+
             Map<String, Object> response = new HashMap<>();
-            response.put("user", user);
+            response.put("user", loginResponse);
             response.put("token", token);
 
             return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
         }
+
     }
 
     @GetMapping("/{username}")
@@ -118,8 +129,8 @@ public class UsuarioController {
     }
 
     @GetMapping
-    public List<Usuario> getUsuarios() {
-        return usuarioService.obtenerTodosLosUsuarios();
+    public List<UsuarioDTO> getUsuarios() {
+        return usuarioService.obtenerTodosComoDTO();
     }
 
     @PutMapping("/{id}/rol")
@@ -133,39 +144,56 @@ public class UsuarioController {
         }
     }
 
-    @PostMapping("/{username}/comprar")
-    public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username, @RequestBody Jugador jugador) {
-        System.out.println("📩 Recibido en compra: " + jugador);
+@PostMapping("/{username}/comprar")
+public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username, @RequestBody Jugador jugadorRequest) {
+    System.out.println("📩 Recibido ID del jugador para compra: " + jugadorRequest.getId());
 
-        boolean exito = usuarioService.comprarJugador(username, jugador);
-
+    Optional<Jugador> jugadorOpt = usuarioService.jugadorRepository.findById(jugadorRequest.getId());
+    if (jugadorOpt.isEmpty()) {
         Map<String, Object> response = new HashMap<>();
-        if (exito) {
-            response.put("mensaje", "Jugador comprado exitosamente.");
-            response.put("status", "success");
-            return ResponseEntity.ok(response);
-        } else {
-            response.put("mensaje", "No se pudo comprar el jugador.");
-            response.put("status", "error");
-            return ResponseEntity.badRequest().body(response);
-        }
-
+        response.put("mensaje", "Jugador no encontrado.");
+        response.put("status", "error");
+        System.out.println("❌ Jugador no encontrado con ID: " + jugadorRequest.getId());
+        return ResponseEntity.badRequest().body(response);
     }
+
+    Jugador jugador = jugadorOpt.get();
+    System.out.println("🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
+
+    boolean exito = usuarioService.comprarJugador(username, jugador);
+    Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+
+    Map<String, Object> response = new HashMap<>();
+    if (exito && usuario != null) {
+        response.put("mensaje", "Jugador comprado exitosamente.");
+        response.put("status", "success");
+        response.put("dinero", usuario.getDinero());
+        System.out.println("✅ Compra exitosa: Jugador " + jugador.getNombre() + " comprado por " + username);
+        return ResponseEntity.ok(response);
+    } else {
+        response.put("mensaje", "No se pudo comprar el jugador. Revisa dinero disponible o capacidad de plantilla.");
+        response.put("status", "error");
+        System.out.println("❌ Error: No se pudo comprar el jugador. Posibles causas: dinero insuficiente, jugador ya comprado o banquillo lleno.");
+        return ResponseEntity.badRequest().body(response);
+    }
+}
+
+
 
     @PostMapping("/{username}/vender")
     public ResponseEntity<Map<String, Object>> venderJugador(@PathVariable String username, @RequestBody Jugador jugador) {
         System.out.println("🎯 Recibiendo solicitud para vender el jugador: " + jugador.getNombre() + " (ID: " + jugador.getId() + ")");
 
-        Map<String, Object> response = new HashMap<>();
         boolean exito = usuarioService.venderJugador(username, jugador);
+        Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
 
-        if (exito) {
-            System.out.println("✅ Jugador vendido exitosamente: " + jugador.getNombre());
+        Map<String, Object> response = new HashMap<>();
+        if (exito && usuario != null) {
             response.put("mensaje", "Jugador vendido exitosamente.");
             response.put("status", "success");
+            response.put("dinero", usuario.getDinero());  // ✅ Dinero actualizado
             return ResponseEntity.ok(response);
         } else {
-            System.out.println("❌ No se pudo vender el jugador: " + jugador.getNombre());
             response.put("mensaje", "No se pudo vender el jugador.");
             response.put("status", "error");
             return ResponseEntity.badRequest().body(response);

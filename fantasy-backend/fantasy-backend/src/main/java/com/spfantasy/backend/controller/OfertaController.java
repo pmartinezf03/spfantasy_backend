@@ -115,11 +115,18 @@ public class OfertaController {
         Oferta ofertaExistente = ofertaService.obtenerOfertaPorId(id)
                 .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
 
-        // Crear la nueva contraoferta
+        // Devolver dinero al comprador original porque la oferta original ya no está vigente
+        Usuario compradorOriginal = ofertaExistente.getComprador();
+        compradorOriginal.setDinero(compradorOriginal.getDinero().add(ofertaExistente.getMontoOferta()));
+        usuarioService.usuarioRepository.save(compradorOriginal);
+
+        // Crear claramente la contraoferta
         nuevaOferta.setEstado(Oferta.EstadoOferta.CONTRAOFERTA);
-        nuevaOferta.setVendedor(ofertaExistente.getComprador()); // Ahora el vendedor es quien hizo la oferta
-        nuevaOferta.setComprador(ofertaExistente.getVendedor()); // El comprador ahora es el que la recibe
-        ofertaService.crearOferta(nuevaOferta);
+        nuevaOferta.setVendedor(ofertaExistente.getComprador());
+        nuevaOferta.setComprador(ofertaExistente.getVendedor());
+
+        ofertaService.crearContraoferta(nuevaOferta); // <-- Cambio aquí: método específico para contraofertas
+        ofertaService.eliminarOferta(ofertaExistente.getId());
 
         Map<String, String> response = new HashMap<>();
         response.put("message", "Contraoferta enviada correctamente.");

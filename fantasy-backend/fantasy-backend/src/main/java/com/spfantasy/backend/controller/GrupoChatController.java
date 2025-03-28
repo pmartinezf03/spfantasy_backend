@@ -41,4 +41,11 @@ public class GrupoChatController {
 
         return grupoChatService.unirseAGrupo(grupoId, usuarioId, passwordGrupo);
     }
+
+    // ✅ Obtener grupos de un usuario
+    @GetMapping("/usuario/{usuarioId}")
+    public List<GrupoChat> obtenerGruposDelUsuario(@PathVariable Long usuarioId) {
+        return grupoChatService.obtenerGruposDelUsuario(usuarioId);
+    }
+
 }

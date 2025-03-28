@@ -25,7 +25,20 @@ public class OfertaService {
         this.jugadorRepository = jugadorRepository;
     }
 
+    @Transactional
     public Oferta crearOferta(Oferta oferta) {
+
+        Usuario comprador = usuarioRepository.findById(oferta.getComprador().getId())
+                .orElseThrow(() -> new RuntimeException("Comprador no encontrado"));
+
+        // Descontar dinero al comprador inmediatamente al hacer la oferta
+        if (comprador.getDinero().compareTo(oferta.getMontoOferta()) < 0) {
+            throw new RuntimeException("No tienes suficiente dinero para esta oferta.");
+        }
+
+        comprador.setDinero(comprador.getDinero().subtract(oferta.getMontoOferta()));
+        usuarioRepository.save(comprador);
+
         return ofertaRepository.save(oferta);
     }
 
@@ -41,7 +54,17 @@ public class OfertaService {
         return ofertaRepository.findByCompradorId(compradorId);
     }
 
+    @Transactional
     public void eliminarOferta(Long id) {
+        Oferta oferta = ofertaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
+
+        Usuario comprador = oferta.getComprador();
+
+        // Devolver el dinero al comprador al eliminar la oferta
+        comprador.setDinero(comprador.getDinero().add(oferta.getMontoOferta()));
+        usuarioRepository.save(comprador);
+
         ofertaRepository.deleteById(id);
     }
 
@@ -71,6 +94,12 @@ public class OfertaService {
         usuarioRepository.save(comprador);
         jugadorRepository.save(jugador);
         ofertaRepository.delete(oferta);
+    }
+
+    @Transactional
+    public Oferta crearContraoferta(Oferta contraoferta) {
+        // No validar dinero para las contraofertas
+        return ofertaRepository.save(contraoferta);
     }
 
     @Transactional

@@ -1,5 +1,5 @@
 package com.spfantasy.backend.service;
-
+import com.spfantasy.backend.dto.MensajeDTO;
 import com.spfantasy.backend.model.Mensaje;
 import com.spfantasy.backend.model.GrupoChat;
 import com.spfantasy.backend.model.Usuario;
@@ -11,6 +11,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -28,7 +29,6 @@ public class MensajeService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    // ✅ Guardar un mensaje y enviarlo por WebSockets
     @Transactional
     public Mensaje enviarMensaje(Long remitenteId, Long destinatarioId, Long grupoId, String contenido) {
         Usuario remitente = usuarioRepository.findById(remitenteId)
@@ -38,7 +38,7 @@ public class MensajeService {
         mensaje.setRemitente(remitente);
         mensaje.setContenido(contenido);
 
-        if (grupoId != null) { // ✅ Mensaje grupal
+        if (grupoId != null) {
             GrupoChat grupo = grupoChatRepository.findById(grupoId)
                     .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
             mensaje.setGrupo(grupo);
@@ -50,7 +50,7 @@ public class MensajeService {
 
             mensajeRepository.save(mensaje);
             messagingTemplate.convertAndSend("/chat/mensajes", mensaje);
-        } else if (destinatarioId != null) { // ✅ Mensaje privado
+        } else if (destinatarioId != null) {
             Usuario destinatario = usuarioRepository.findById(destinatarioId)
                     .orElseThrow(() -> new RuntimeException("Usuario destinatario no encontrado"));
             mensaje.setDestinatario(destinatario);
@@ -70,14 +70,12 @@ public class MensajeService {
         return mensaje;
     }
 
-    // ✅ Obtener los últimos 500 mensajes de un grupo
     public List<Mensaje> obtenerMensajesGrupo(Long grupoId) {
         GrupoChat grupo = grupoChatRepository.findById(grupoId)
                 .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
         return mensajeRepository.findTop500ByGrupoOrderByTimestampDesc(grupo);
     }
 
-    // ✅ Obtener los últimos 500 mensajes entre dos usuarios
     public List<Mensaje> obtenerMensajesPrivados(Long usuario1Id, Long usuario2Id) {
         Usuario usuario1 = usuarioRepository.findById(usuario1Id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -86,5 +84,56 @@ public class MensajeService {
 
         return mensajeRepository.findTop500ByRemitenteAndDestinatarioOrDestinatarioAndRemitenteOrderByTimestampDesc(
                 usuario1, usuario2, usuario2, usuario1);
+    }
+
+    public List<MensajeDTO> obtenerMensajesGrupoDTO(Long grupoId) {
+        GrupoChat grupo = grupoChatRepository.findById(grupoId)
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
+        List<Mensaje> mensajes = mensajeRepository.findTop500ByGrupoOrderByTimestampDesc(grupo);
+        return mensajes.stream().map(this::convertirADTO).toList();
+    }
+
+    public List<MensajeDTO> obtenerMensajesPrivadosDTO(Long usuario1Id, Long usuario2Id) {
+        Usuario usuario1 = usuarioRepository.findById(usuario1Id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Usuario usuario2 = usuarioRepository.findById(usuario2Id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        List<Mensaje> mensajes = mensajeRepository.findTop500ByRemitenteAndDestinatarioOrDestinatarioAndRemitenteOrderByTimestampDesc(
+                usuario1, usuario2, usuario2, usuario1);
+        return mensajes.stream().map(this::convertirADTO).toList();
+    }
+
+    private MensajeDTO convertirADTO(Mensaje mensaje) {
+        return new MensajeDTO(
+                mensaje.getId(),
+                mensaje.getRemitente().getId(),
+                mensaje.getRemitente().getUsername(),
+                mensaje.getDestinatario() != null ? mensaje.getDestinatario().getId() : null,
+                mensaje.getGrupo() != null ? mensaje.getGrupo().getId() : null,
+                mensaje.getContenido(),
+                mensaje.getTimestamp()
+        );
+    }
+
+    // ✅ NUEVO: obtener todos los mensajes donde participa el usuario
+    public List<MensajeDTO> obtenerTodosMisMensajes(Long usuarioId) {
+        Usuario usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // 🔍 Mensajes privados donde es remitente o destinatario
+        List<Mensaje> privados = mensajeRepository.findTop500ByRemitenteOrDestinatarioOrderByTimestampDesc(usuario, usuario);
+
+        // 🔍 Obtener todos los grupos donde está este usuario
+        List<GrupoChat> grupos = grupoChatRepository.findByUsuariosContaining(usuario);
+
+        // 🔍 Mensajes de los grupos a los que pertenece
+        List<Mensaje> grupales = mensajeRepository.findTop500ByGrupoInOrderByTimestampDesc(grupos);
+
+        List<Mensaje> todos = new ArrayList<>();
+        todos.addAll(privados);
+        todos.addAll(grupales);
+
+        return todos.stream().map(this::convertirADTO).toList();
     }
 }
