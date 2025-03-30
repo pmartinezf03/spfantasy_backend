@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/jugadores")
-@CrossOrigin(origins = "http://localhost:4200")
 public class JugadorController {
 
     @Autowired

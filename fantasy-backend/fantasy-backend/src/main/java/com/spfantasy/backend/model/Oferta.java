@@ -37,20 +37,71 @@ public class Oferta {
     public enum EstadoOferta {
         PENDIENTE, ACEPTADA, RECHAZADA, CONTRAOFERTA
     }
+    @Column(name = "leida_por_vendedor")
+    private Boolean leidaPorVendedor = false;
 
-    public Long getId() { return id; }
-    public Jugador getJugador() { return jugador; }
-    public Usuario getComprador() { return comprador; }
-    public Usuario getVendedor() { return vendedor; }
-    public BigDecimal getMontoOferta() { return montoOferta; }
-    public EstadoOferta getEstado() { return estado; }
-    public LocalDateTime getTimestamp() { return timestamp; }
+    public Long getId() {
+        return id;
+    }
 
-    public void setId(Long id) { this.id = id; }
-    public void setJugador(Jugador jugador) { this.jugador = jugador; }
-    public void setComprador(Usuario comprador) { this.comprador = comprador; }
-    public void setVendedor(Usuario vendedor) { this.vendedor = vendedor; }
-    public void setMontoOferta(BigDecimal montoOferta) { this.montoOferta = montoOferta; }
-    public void setEstado(EstadoOferta estado) { this.estado = estado; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public Jugador getJugador() {
+        return jugador;
+    }
+
+    public Usuario getComprador() {
+        return comprador;
+    }
+
+    public Usuario getVendedor() {
+        return vendedor;
+    }
+
+    public BigDecimal getMontoOferta() {
+        return montoOferta;
+    }
+
+    public EstadoOferta getEstado() {
+        return estado;
+    }
+
+    public LocalDateTime getTimestamp() {
+        return timestamp;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setJugador(Jugador jugador) {
+        this.jugador = jugador;
+    }
+
+    public void setComprador(Usuario comprador) {
+        this.comprador = comprador;
+    }
+
+    public void setVendedor(Usuario vendedor) {
+        this.vendedor = vendedor;
+    }
+
+    public void setMontoOferta(BigDecimal montoOferta) {
+        this.montoOferta = montoOferta;
+    }
+
+    public void setEstado(EstadoOferta estado) {
+        this.estado = estado;
+    }
+
+    public void setTimestamp(LocalDateTime timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public Boolean getLeidaPorVendedor() {
+        return leidaPorVendedor;
+    }
+
+    public void setLeidaPorVendedor(Boolean leidaPorVendedor) {
+        this.leidaPorVendedor = leidaPorVendedor;
+    }
+
 }

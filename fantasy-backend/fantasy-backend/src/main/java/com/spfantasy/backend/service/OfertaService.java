@@ -112,5 +112,10 @@ public class OfertaService {
 
         return ofertaRepository.save(oferta);
     }
+    
+    public boolean tieneOfertasNuevas(Long vendedorId) {
+    return !ofertaRepository.findByVendedorIdAndLeidaPorVendedorFalse(vendedorId).isEmpty();
+}
+
 
 }

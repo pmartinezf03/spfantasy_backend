@@ -22,7 +22,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @RestController
 @RequestMapping("/usuarios")
-@CrossOrigin(origins = "http://localhost:4200")
 public class UsuarioController {
 
     @Autowired
@@ -75,43 +74,51 @@ public class UsuarioController {
         if (usuario != null) {
             List<JugadorDTO> titulares = usuario.getPlantilla().stream()
                     .filter(Jugador::getTitular)
-                    .map(jugador -> new JugadorDTO(
-                    jugador.getId(),
-                    jugador.getNombre(),
-                    jugador.getPosicion(),
-                    jugador.getPrecioVenta().doubleValue(),
-                    jugador.getRendimiento().doubleValue(),
-                    jugador.getPuntosTotales(),
-                    jugador.getEquipo(),
-                    jugador.getFotoUrl(),
-                    jugador.getPts(),
-                    jugador.getMin(),
-                    jugador.getTl(),
-                    jugador.getT2(),
-                    jugador.getT3(),
-                    jugador.getFp(),
-                    jugador.getPropietario()
-            )).toList();
+                    .map(jugador -> {
+                        JugadorDTO dto = new JugadorDTO(
+                                jugador.getId(),
+                                jugador.getNombre(),
+                                jugador.getPosicion(),
+                                jugador.getPrecioVenta().doubleValue(),
+                                jugador.getRendimiento().doubleValue(),
+                                jugador.getPuntosTotales(),
+                                jugador.getEquipo(),
+                                jugador.getFotoUrl(),
+                                jugador.getPts(),
+                                jugador.getMin(),
+                                jugador.getTl(),
+                                jugador.getT2(),
+                                jugador.getT3(),
+                                jugador.getFp(),
+                                jugador.getPropietario()
+                        );
+                        dto.setEsTitular(true);
+                        return dto;
+                    }).toList();
 
             List<JugadorDTO> suplentes = usuario.getPlantilla().stream()
                     .filter(j -> !j.getTitular())
-                    .map(jugador -> new JugadorDTO(
-                    jugador.getId(),
-                    jugador.getNombre(),
-                    jugador.getPosicion(),
-                    jugador.getPrecioVenta().doubleValue(),
-                    jugador.getRendimiento().doubleValue(),
-                    jugador.getPuntosTotales(),
-                    jugador.getEquipo(),
-                    jugador.getFotoUrl(),
-                    jugador.getPts(),
-                    jugador.getMin(),
-                    jugador.getTl(),
-                    jugador.getT2(),
-                    jugador.getT3(),
-                    jugador.getFp(),
-                    jugador.getPropietario()
-            )).toList();
+                    .map(jugador -> {
+                        JugadorDTO dto = new JugadorDTO(
+                                jugador.getId(),
+                                jugador.getNombre(),
+                                jugador.getPosicion(),
+                                jugador.getPrecioVenta().doubleValue(),
+                                jugador.getRendimiento().doubleValue(),
+                                jugador.getPuntosTotales(),
+                                jugador.getEquipo(),
+                                jugador.getFotoUrl(),
+                                jugador.getPts(),
+                                jugador.getMin(),
+                                jugador.getTl(),
+                                jugador.getT2(),
+                                jugador.getT3(),
+                                jugador.getFp(),
+                                jugador.getPropietario()
+                        );
+                        dto.setEsTitular(false);
+                        return dto;
+                    }).toList();
 
             Map<String, Object> response = new HashMap<>();
             response.put("username", usuario.getUsername());
@@ -144,41 +151,39 @@ public class UsuarioController {
         }
     }
 
-@PostMapping("/{username}/comprar")
-public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username, @RequestBody Jugador jugadorRequest) {
-    System.out.println("📩 Recibido ID del jugador para compra: " + jugadorRequest.getId());
+    @PostMapping("/{username}/comprar")
+    public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username, @RequestBody Jugador jugadorRequest) {
+        System.out.println("📩 Recibido ID del jugador para compra: " + jugadorRequest.getId());
 
-    Optional<Jugador> jugadorOpt = usuarioService.jugadorRepository.findById(jugadorRequest.getId());
-    if (jugadorOpt.isEmpty()) {
+        Optional<Jugador> jugadorOpt = usuarioService.jugadorRepository.findById(jugadorRequest.getId());
+        if (jugadorOpt.isEmpty()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("mensaje", "Jugador no encontrado.");
+            response.put("status", "error");
+            System.out.println("❌ Jugador no encontrado con ID: " + jugadorRequest.getId());
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        Jugador jugador = jugadorOpt.get();
+        System.out.println("🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
+
+        boolean exito = usuarioService.comprarJugador(username, jugador);
+        Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+
         Map<String, Object> response = new HashMap<>();
-        response.put("mensaje", "Jugador no encontrado.");
-        response.put("status", "error");
-        System.out.println("❌ Jugador no encontrado con ID: " + jugadorRequest.getId());
-        return ResponseEntity.badRequest().body(response);
+        if (exito && usuario != null) {
+            response.put("mensaje", "Jugador comprado exitosamente.");
+            response.put("status", "success");
+            response.put("dinero", usuario.getDinero());
+            System.out.println("✅ Compra exitosa: Jugador " + jugador.getNombre() + " comprado por " + username);
+            return ResponseEntity.ok(response);
+        } else {
+            response.put("mensaje", "No se pudo comprar el jugador. Revisa dinero disponible o capacidad de plantilla.");
+            response.put("status", "error");
+            System.out.println("❌ Error: No se pudo comprar el jugador. Posibles causas: dinero insuficiente, jugador ya comprado o banquillo lleno.");
+            return ResponseEntity.badRequest().body(response);
+        }
     }
-
-    Jugador jugador = jugadorOpt.get();
-    System.out.println("🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
-
-    boolean exito = usuarioService.comprarJugador(username, jugador);
-    Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
-
-    Map<String, Object> response = new HashMap<>();
-    if (exito && usuario != null) {
-        response.put("mensaje", "Jugador comprado exitosamente.");
-        response.put("status", "success");
-        response.put("dinero", usuario.getDinero());
-        System.out.println("✅ Compra exitosa: Jugador " + jugador.getNombre() + " comprado por " + username);
-        return ResponseEntity.ok(response);
-    } else {
-        response.put("mensaje", "No se pudo comprar el jugador. Revisa dinero disponible o capacidad de plantilla.");
-        response.put("status", "error");
-        System.out.println("❌ Error: No se pudo comprar el jugador. Posibles causas: dinero insuficiente, jugador ya comprado o banquillo lleno.");
-        return ResponseEntity.badRequest().body(response);
-    }
-}
-
-
 
     @PostMapping("/{username}/vender")
     public ResponseEntity<Map<String, Object>> venderJugador(@PathVariable String username, @RequestBody Jugador jugador) {

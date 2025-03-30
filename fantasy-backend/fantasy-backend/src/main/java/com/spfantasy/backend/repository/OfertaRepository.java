@@ -15,4 +15,6 @@ public interface OfertaRepository extends JpaRepository<Oferta, Long> {
 
     @Query("SELECT o FROM Oferta o JOIN FETCH o.jugador j WHERE o.comprador.id = :compradorId")
     List<Oferta> findByCompradorId(@Param("compradorId") Long compradorId);
+    List<Oferta> findByVendedorIdAndLeidaPorVendedorFalse(Long vendedorId);
+
 }

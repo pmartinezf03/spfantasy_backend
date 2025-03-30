@@ -153,4 +153,12 @@ public class OfertaController {
         return ResponseEntity.ok(Map.of("message", "✅ Oferta retirada correctamente."));
     }
 
+    @GetMapping("/nuevas/{vendedorId}")
+    public ResponseEntity<Map<String, Boolean>> tieneOfertasNuevas(@PathVariable Long vendedorId) {
+        boolean tieneNuevas = ofertaService.tieneOfertasNuevas(vendedorId);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("tieneOfertasNuevas", tieneNuevas);
+        return ResponseEntity.ok(response);
+    }
+
 }

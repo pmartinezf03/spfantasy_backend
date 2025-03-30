@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/mensajes")
-@CrossOrigin(origins = "http://localhost:4200") // 🔥 PERMITIR CORS PARA ANGULAR
 public class MensajeController {
 
     @Autowired

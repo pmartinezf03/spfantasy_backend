@@ -33,6 +33,16 @@ public class Usuario {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal dinero = BigDecimal.valueOf(3000000);
+    @Column(name = "puntos")
+    private int puntos;
+
+    public int getPuntos() {
+        return puntos;
+    }
+
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
+    }
 
     @ManyToMany
     @JoinTable(
@@ -40,14 +50,15 @@ public class Usuario {
             joinColumns = @JoinColumn(name = "usuario_id"),
             inverseJoinColumns = @JoinColumn(name = "jugador_id")
     )
-    @JsonIgnore // 🔥 Evita la serialización infinita
+    @JsonIgnore
     private List<Jugador> plantilla;
 
     @ManyToMany(mappedBy = "usuarios")
     private List<GrupoChat> grupos = new ArrayList<>();
 
+
+
     public List<GrupoChat> getGrupos() {
         return grupos;
     }
-
 }

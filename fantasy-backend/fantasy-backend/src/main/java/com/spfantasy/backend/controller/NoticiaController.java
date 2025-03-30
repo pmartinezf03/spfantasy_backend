@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/noticias")
-@CrossOrigin(origins = "http://localhost:4200") // Permitir conexión con Angular
 public class NoticiaController {  // Asegurar que el nombre coincide con el de la clase
     private final NoticiaService noticiaService;
 
