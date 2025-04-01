@@ -1,7 +1,6 @@
 package com.spfantasy.backend.service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +45,11 @@ public class LigaService {
         Usuario creador = usuarioRepository.findById(creadorId)
                 .orElseThrow(() -> new RuntimeException("Creador no encontrado"));
 
+        // ❌ Si ya pertenece a una liga, no puede crear otra
+        if (usuarioLigaRepository.existsByUsuarioId(creadorId)) {
+            throw new RuntimeException("Este usuario ya pertenece a una liga");
+        }
+
         Liga liga = new Liga();
         liga.setNombre(nombre);
         liga.setCodigoInvitacion(codigoInvitacion);
@@ -65,17 +69,14 @@ public class LigaService {
         return liga;
     }
 
-    public Optional<Liga> buscarPorCodigo(String codigo) {
-        return ligaRepository.findByCodigoInvitacion(codigo);
-    }
-
     @Transactional
     public LigaUnidaDTO unirseALiga(UnirseLigaDTO dto) {
         Liga liga = ligaRepository.findByCodigoInvitacion(dto.getCodigoInvitacion())
                 .orElseThrow(() -> new RuntimeException("Código de invitación inválido"));
 
-        if (usuarioLigaRepository.existsByUsuarioIdAndLigaId(dto.getUsuarioId(), liga.getId())) {
-            throw new RuntimeException("Ya estás en esta liga");
+        // ❌ Ya pertenece a cualquier liga
+        if (usuarioLigaRepository.existsByUsuarioId(dto.getUsuarioId())) {
+            throw new RuntimeException("Este usuario ya pertenece a una liga");
         }
 
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
@@ -170,10 +171,9 @@ public class LigaService {
 
         return relaciones.stream()
                 .map(ul -> new RankingUsuarioDTO(
-                ul.getUsuario().getId(),
-                ul.getUsuario().getUsername(),
-                ul.getUsuario().getPuntos()
-        ))
+                        ul.getUsuario().getId(),
+                        ul.getUsuario().getUsername(),
+                        ul.getUsuario().getPuntos()))
                 .sorted((u1, u2) -> Integer.compare(u2.getPuntosTotales(), u1.getPuntosTotales()))
                 .collect(Collectors.toList());
     }
@@ -197,6 +197,8 @@ public class LigaService {
         ligaRepository.save(liga);
     }
 
-    
+    public List<Liga> obtenerTodasLasLigas() {
+        return ligaRepository.findAll();
+    }
 
 }

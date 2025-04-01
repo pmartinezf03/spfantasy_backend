@@ -1,5 +1,19 @@
 package com.spfantasy.backend.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.spfantasy.backend.dto.ActualizarLigaDTO;
 import com.spfantasy.backend.dto.CrearLigaDTO;
 import com.spfantasy.backend.dto.LigaUnidaDTO;
@@ -8,10 +22,6 @@ import com.spfantasy.backend.dto.RankingUsuarioDTO;
 import com.spfantasy.backend.dto.UnirseLigaDTO;
 import com.spfantasy.backend.model.Liga;
 import com.spfantasy.backend.service.LigaService;
-import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/ligas")
@@ -49,7 +59,8 @@ public class LigaController {
     }
 
     @DeleteMapping("/{ligaId}/expulsar/{usuarioId}")
-    public ResponseEntity<String> expulsarDeLaLiga(@PathVariable Long ligaId, @PathVariable Long usuarioId, @RequestParam Long creadorId) {
+    public ResponseEntity<String> expulsarDeLaLiga(@PathVariable Long ligaId, @PathVariable Long usuarioId,
+            @RequestParam Long creadorId) {
         ligaService.expulsarDeLaLiga(ligaId, usuarioId, creadorId);
         return ResponseEntity.ok("Usuario expulsado de la liga");
     }
@@ -74,6 +85,12 @@ public class LigaController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @GetMapping("/todas")
+    public ResponseEntity<List<Liga>> obtenerTodasLasLigas() {
+        List<Liga> ligas = ligaService.obtenerTodasLasLigas();
+        return ResponseEntity.ok(ligas);
     }
 
 }

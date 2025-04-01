@@ -30,7 +30,16 @@ public class UsuarioLigaService {
     }
 
     public Optional<Long> obtenerLigaDelUsuario(Long usuarioId) {
-        return usuarioLigaRepository.findByUsuarioId(usuarioId)
-                .map(relacion -> relacion.getLiga().getId());
+        List<UsuarioLiga> ligas = usuarioLigaRepository.findAllByUsuarioId(usuarioId);
+
+        if (ligas.size() > 1) {
+            throw new IllegalStateException("El usuario pertenece a más de una liga, lo cual no está permitido.");
+        }
+
+        if (ligas.isEmpty())
+            return Optional.empty();
+
+        return Optional.of(ligas.get(0).getLiga().getId());
     }
+
 }

@@ -19,6 +19,8 @@ public interface UsuarioLigaRepository extends JpaRepository<UsuarioLiga, Long> 
 
     Optional<UsuarioLiga> findByUsuarioIdAndLigaId(Long usuarioId, Long ligaId);
 
-    Optional<UsuarioLiga> findByUsuarioId(Long usuarioId);
+    List<UsuarioLiga> findAllByUsuarioId(Long usuarioId);
+
+    boolean existsByUsuarioId(Long usuarioId);
 
 }

@@ -1,18 +1,25 @@
 package com.spfantasy.backend.controller;
 
-import com.spfantasy.backend.dto.JugadorDTO;
-import com.spfantasy.backend.model.Jugador;
-import com.spfantasy.backend.model.Usuario;
-import com.spfantasy.backend.service.JugadorService;
-import com.spfantasy.backend.repository.JugadorRepository;
-import com.spfantasy.backend.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.spfantasy.backend.dto.JugadorDTO;
+import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorRepository;
+import com.spfantasy.backend.repository.UsuarioRepository;
+import com.spfantasy.backend.service.JugadorService;
 
 @RestController
 @RequestMapping("/jugadores")
@@ -63,7 +70,8 @@ public class JugadorController {
 
             if (!jugadorEnPlantilla) {
                 System.out.println("❌ El jugador no está en la plantilla del usuario.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El jugador no está en la plantilla del usuario");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("El jugador no está en la plantilla del usuario");
             } else {
                 System.out.println("✅ El jugador está en la plantilla y puede ser vendido.");
             }
