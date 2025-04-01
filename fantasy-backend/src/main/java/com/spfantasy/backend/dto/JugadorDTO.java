@@ -1,7 +1,6 @@
 package com.spfantasy.backend.dto;
 
 import com.spfantasy.backend.model.Equipo;
-import com.spfantasy.backend.model.Jugador;
 import com.spfantasy.backend.model.Usuario;
 
 public class JugadorDTO {

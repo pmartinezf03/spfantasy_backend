@@ -1,15 +1,19 @@
 package com.spfantasy.backend.service;
 
-import com.spfantasy.backend.model.*;
-import com.spfantasy.backend.repository.JugadorLigaRepository;
-import com.spfantasy.backend.repository.JugadorRepository;
-import jakarta.transaction.Transactional;
+import java.util.Collections;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.JugadorLiga;
+import com.spfantasy.backend.model.Liga;
+import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorLigaRepository;
+import com.spfantasy.backend.repository.JugadorRepository;
+
+import jakarta.transaction.Transactional;
 
 @Service
 public class JugadorLigaService {

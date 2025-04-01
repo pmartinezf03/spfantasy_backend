@@ -1,10 +1,12 @@
 package com.spfantasy.backend.repository;
 
-import com.spfantasy.backend.model.UsuarioLiga;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import com.spfantasy.backend.model.UsuarioLiga;
 
 @Repository
 public interface UsuarioLigaRepository extends JpaRepository<UsuarioLiga, Long> {
@@ -16,5 +18,7 @@ public interface UsuarioLigaRepository extends JpaRepository<UsuarioLiga, Long> 
     void deleteByUsuarioIdAndLigaId(Long usuarioId, Long ligaId);
 
     Optional<UsuarioLiga> findByUsuarioIdAndLigaId(Long usuarioId, Long ligaId);
+
+    Optional<UsuarioLiga> findByUsuarioId(Long usuarioId);
 
 }

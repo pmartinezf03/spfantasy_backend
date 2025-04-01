@@ -1,24 +1,27 @@
 package com.spfantasy.backend.service;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.spfantasy.backend.dto.ActualizarLigaDTO;
-import com.spfantasy.backend.dto.UnirseLigaDTO;
 import com.spfantasy.backend.dto.LigaUnidaDTO;
 import com.spfantasy.backend.dto.MiembroLigaDTO;
 import com.spfantasy.backend.dto.RankingUsuarioDTO;
+import com.spfantasy.backend.dto.UnirseLigaDTO;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Liga;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.model.UsuarioLiga;
 import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.LigaRepository;
-import com.spfantasy.backend.repository.UsuarioRepository;
 import com.spfantasy.backend.repository.UsuarioLigaRepository;
+import com.spfantasy.backend.repository.UsuarioRepository;
+
 import jakarta.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 @Service
 public class LigaService {
@@ -193,5 +196,7 @@ public class LigaService {
 
         ligaRepository.save(liga);
     }
+
+    
 
 }
