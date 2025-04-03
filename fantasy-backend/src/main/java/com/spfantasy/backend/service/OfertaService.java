@@ -1,37 +1,39 @@
 package com.spfantasy.backend.service;
 
-import com.spfantasy.backend.model.Jugador;
-import com.spfantasy.backend.model.Oferta;
-import com.spfantasy.backend.model.Usuario;
-import com.spfantasy.backend.repository.OfertaRepository;
-import com.spfantasy.backend.repository.UsuarioRepository;
-import com.spfantasy.backend.repository.JugadorRepository;
 import java.math.BigDecimal;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.spfantasy.backend.model.JugadorLiga;
+import com.spfantasy.backend.model.Oferta;
+import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorLigaRepository;
+import com.spfantasy.backend.repository.OfertaRepository;
+import com.spfantasy.backend.repository.UsuarioRepository;
 
 @Service
 public class OfertaService {
 
     private final OfertaRepository ofertaRepository;
     private final UsuarioRepository usuarioRepository;
-    private final JugadorRepository jugadorRepository;
+    private final JugadorLigaRepository jugadorLigaRepository;
 
-    public OfertaService(OfertaRepository ofertaRepository, UsuarioRepository usuarioRepository, JugadorRepository jugadorRepository) {
+    public OfertaService(OfertaRepository ofertaRepository,
+            UsuarioRepository usuarioRepository,
+            JugadorLigaRepository jugadorLigaRepository) {
         this.ofertaRepository = ofertaRepository;
         this.usuarioRepository = usuarioRepository;
-        this.jugadorRepository = jugadorRepository;
+        this.jugadorLigaRepository = jugadorLigaRepository;
     }
 
     @Transactional
     public Oferta crearOferta(Oferta oferta) {
-
         Usuario comprador = usuarioRepository.findById(oferta.getComprador().getId())
                 .orElseThrow(() -> new RuntimeException("Comprador no encontrado"));
 
-        // Descontar dinero al comprador inmediatamente al hacer la oferta
         if (comprador.getDinero().compareTo(oferta.getMontoOferta()) < 0) {
             throw new RuntimeException("No tienes suficiente dinero para esta oferta.");
         }
@@ -60,8 +62,6 @@ public class OfertaService {
                 .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
 
         Usuario comprador = oferta.getComprador();
-
-        // Devolver el dinero al comprador al eliminar la oferta
         comprador.setDinero(comprador.getDinero().add(oferta.getMontoOferta()));
         usuarioRepository.save(comprador);
 
@@ -75,30 +75,22 @@ public class OfertaService {
 
         Usuario comprador = oferta.getComprador();
         Usuario vendedor = oferta.getVendedor();
-        Jugador jugador = oferta.getJugador();
+        JugadorLiga jugador = oferta.getJugador();
 
-        // Remover el jugador de la plantilla del vendedor
-        vendedor.getPlantilla().remove(jugador);
-
-        // Agregar el jugador a la plantilla del comprador
-        comprador.getPlantilla().add(jugador);
         jugador.setPropietario(comprador);
         jugador.setDisponible(false);
 
-        // Transferencia de dinero
         comprador.setDinero(comprador.getDinero().subtract(oferta.getMontoOferta()));
         vendedor.setDinero(vendedor.getDinero().add(oferta.getMontoOferta()));
 
-        // Guardar cambios en BD
         usuarioRepository.save(vendedor);
         usuarioRepository.save(comprador);
-        jugadorRepository.save(jugador);
+        jugadorLigaRepository.save(jugador);
         ofertaRepository.delete(oferta);
     }
 
     @Transactional
     public Oferta crearContraoferta(Oferta contraoferta) {
-        // No validar dinero para las contraofertas
         return ofertaRepository.save(contraoferta);
     }
 
@@ -112,10 +104,31 @@ public class OfertaService {
 
         return ofertaRepository.save(oferta);
     }
-    
-    public boolean tieneOfertasNuevas(Long vendedorId) {
-    return !ofertaRepository.findByVendedorIdAndLeidaPorVendedorFalse(vendedorId).isEmpty();
-}
 
+    public boolean tieneOfertasNuevas(Long vendedorId) {
+        return !ofertaRepository.findByVendedorIdAndLeidaPorVendedorFalse(vendedorId).isEmpty();
+    }
+
+    public List<Oferta> obtenerOfertasPorVendedorYLiga(Long vendedorId, Long ligaId) {
+        return ofertaRepository.findByVendedor_IdAndLiga_Id(vendedorId, ligaId);
+    }
+
+    public List<Oferta> obtenerOfertasPorCompradorYLiga(Long compradorId, Long ligaId) {
+        return ofertaRepository.findByComprador_IdAndLiga_Id(compradorId, ligaId);
+    }
+
+    @Transactional
+    public void marcarOfertasComoLeidas(Long usuarioId) {
+        List<Oferta> ofertas = ofertaRepository.findByVendedor_IdAndLeidaPorVendedorFalse(usuarioId);
+        for (Oferta oferta : ofertas) {
+            oferta.setLeidaPorVendedor(true);
+        }
+        ofertaRepository.saveAll(ofertas);
+    }
+
+    public Optional<Oferta> obtenerUltimaOferta(Long compradorId, Long jugadorLigaId, Long ligaId) {
+        return ofertaRepository.findTopByCompradorIdAndJugadorLigaIdAndLigaIdOrderByTimestampDesc(
+                compradorId, jugadorLigaId, ligaId);
+    }
 
 }

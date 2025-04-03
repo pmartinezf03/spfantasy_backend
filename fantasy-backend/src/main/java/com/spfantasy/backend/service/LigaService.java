@@ -1,6 +1,7 @@
 package com.spfantasy.backend.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,12 +83,17 @@ public class LigaService {
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        // 👉 Actualizar el campo liga_id en el usuario
+        usuario.setLiga(liga);
+        usuarioRepository.save(usuario);
+
+        // 👉 Guardar la relación en UsuarioLiga
         UsuarioLiga ul = new UsuarioLiga();
         ul.setLiga(liga);
         ul.setUsuario(usuario);
         usuarioLigaRepository.save(ul);
 
-        // Repartir jugadores iniciales
+        // 👉 Repartir jugadores iniciales
         jugadorLigaService.repartirJugadoresIniciales(usuario, liga);
 
         return new LigaUnidaDTO(liga.getId(), liga.getNombre(), "Te has unido correctamente");
@@ -114,11 +120,16 @@ public class LigaService {
         // Eliminar relación en UsuarioLiga
         usuarioLigaRepository.deleteByUsuarioIdAndLigaId(usuarioId, ligaId);
 
+        // ❌ Quitar el campo liga_id del usuario
+        usuario.setLiga(null);
+        usuarioRepository.save(usuario);
+
         // Liberar los jugadores del usuario en esta liga
         List<JugadorLiga> jugadores = jugadorLigaRepository.findByLiga_IdAndPropietario_Id(ligaId, usuarioId);
         for (JugadorLiga jugador : jugadores) {
             jugador.setPropietario(null);
             jugador.setDisponible(true);
+            jugador.setEsTitular(false);
             jugadorLigaRepository.save(jugador);
         }
     }
@@ -199,6 +210,11 @@ public class LigaService {
 
     public List<Liga> obtenerTodasLasLigas() {
         return ligaRepository.findAll();
+    }
+
+    public Optional<Liga> obtenerLigaDelUsuario(Long usuarioId) {
+        return usuarioRepository.findById(usuarioId)
+                .map(Usuario::getLiga);
     }
 
 }
