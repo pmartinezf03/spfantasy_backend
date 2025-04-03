@@ -45,6 +45,7 @@ public class JugadorLigaService {
             jl.setTl(jugador.getTl());
             jl.setFp(jugador.getFp());
             jl.setPuntosTotales(jugador.getPuntosTotales());
+            jl.setFotoUrl(jugador.getFotoUrl());
 
             jugadorLigaRepository.save(jl);
         }
@@ -75,6 +76,10 @@ public class JugadorLigaService {
 
     public List<JugadorLiga> obtenerJugadoresDeUsuarioEnLiga(Long ligaId, Long usuarioId) {
         return jugadorLigaRepository.findByLiga_IdAndPropietario_Id(ligaId, usuarioId);
+    }
+
+    public List<JugadorLiga> obtenerTodosEnLiga(Long ligaId) {
+        return jugadorLigaRepository.findByLiga_Id(ligaId); // sin filtrar por propietario
     }
 
 }
