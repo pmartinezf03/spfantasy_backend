@@ -1,22 +1,24 @@
 package com.spfantasy.backend.controller;
 
-import com.spfantasy.backend.model.Jugador;
-import com.spfantasy.backend.model.Oferta;
-import com.spfantasy.backend.model.Usuario;
-import com.spfantasy.backend.repository.JugadorRepository;
-import com.spfantasy.backend.service.OfertaService;
-import com.spfantasy.backend.service.UsuarioService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import com.spfantasy.backend.dto.OfertaDTO;
+import com.spfantasy.backend.model.JugadorLiga;
+import com.spfantasy.backend.model.Oferta;
+import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorLigaRepository;
+import com.spfantasy.backend.service.OfertaService;
+import com.spfantasy.backend.service.UsuarioService;
 
 @RestController
 @RequestMapping("/api/ofertas")
@@ -26,12 +28,13 @@ public class OfertaController {
 
     private final OfertaService ofertaService;
     private final UsuarioService usuarioService;
-    private final JugadorRepository jugadorRepository;
+    private final JugadorLigaRepository jugadorLigaRepository;
 
-    public OfertaController(OfertaService ofertaService, UsuarioService usuarioService, JugadorRepository jugadorRepository) {
+    public OfertaController(OfertaService ofertaService, UsuarioService usuarioService,
+            JugadorLigaRepository jugadorLigaRepository) {
         this.ofertaService = ofertaService;
         this.usuarioService = usuarioService;
-        this.jugadorRepository = jugadorRepository;
+        this.jugadorLigaRepository = jugadorLigaRepository;
     }
 
     @PostMapping
@@ -41,97 +44,104 @@ public class OfertaController {
         String username = usuarioService.obtenerUsernameDesdeToken(token.replace("Bearer ", ""));
         Usuario comprador = usuarioService.obtenerUsuarioPorUsername(username);
 
-        // 🔍 Obtener el jugador desde la BD con su propietario
-        Jugador jugador = jugadorRepository.findById(oferta.getJugador().getId())
-                .orElseThrow(() -> new RuntimeException("Jugador no encontrado"));
+        // 🔍 Obtener jugador de la liga desde la BD
+        JugadorLiga jugadorLiga = jugadorLigaRepository.findById(oferta.getJugador().getId())
+                .orElseThrow(() -> new RuntimeException("JugadorLiga no encontrado"));
 
-        logger.info("🟢 Jugador encontrado: {} | Propietario en BD: {}", jugador.getNombre(), jugador.getPropietario());
+        Usuario propietario = jugadorLiga.getPropietario();
 
-        // 🔴 Validaciones para evitar datos incorrectos
-        if (jugador.getPropietario() == null) {
-            logger.error("❌ Error: El jugador no tiene propietario.");
+        logger.info("🟢 JugadorLiga encontrado: {} | Propietario: {}", jugadorLiga.getJugadorBase().getNombre(),
+                propietario != null ? propietario.getUsername() : "Sin propietario");
+
+        // ❌ Validaciones
+        if (propietario == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El jugador no tiene propietario.");
         }
 
         if (oferta.getMontoOferta() == null || oferta.getMontoOferta().compareTo(BigDecimal.ZERO) <= 0) {
-            logger.error("❌ Error: Monto de oferta inválido: {}", oferta.getMontoOferta());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El monto de la oferta debe ser mayor a 0.");
         }
 
-        // 🔴 Nueva validación: el comprador debe tener suficiente dinero
         if (comprador.getDinero().compareTo(oferta.getMontoOferta()) < 0) {
-            logger.error("❌ Error: El comprador no tiene suficientes fondos. Disponible: {}, Necesario: {}",
-                    comprador.getDinero(), oferta.getMontoOferta());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("❌ No tienes suficiente dinero para realizar esta oferta.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("❌ No tienes suficiente dinero para esta oferta.");
         }
 
+        // Validar misma liga
+        if (comprador.getLiga() == null || propietario.getLiga() == null ||
+                !comprador.getLiga().getId().equals(propietario.getLiga().getId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Ambos usuarios deben estar en la misma liga para realizar una oferta.");
+        }
+
+        // ✅ Guardar oferta
         oferta.setComprador(comprador);
-        oferta.setVendedor(jugador.getPropietario());
+        oferta.setVendedor(propietario);
         oferta.setEstado(Oferta.EstadoOferta.PENDIENTE);
-        oferta.setJugador(jugador);
+        oferta.setJugador(jugadorLiga);
+        oferta.setLiga(comprador.getLiga());
 
         try {
             Oferta nuevaOferta = ofertaService.crearOferta(oferta);
-            logger.info("✅ Oferta creada con éxito: {}", nuevaOferta);
-            return ResponseEntity.ok(nuevaOferta);
+            return ResponseEntity.ok(new OfertaDTO(nuevaOferta)); // ✅ DEVOLVEMOS SOLO LOS DATOS NECESARIOS
         } catch (Exception e) {
-            logger.error("❌ Error al guardar la oferta en la base de datos.", e);
+            logger.error("❌ Error al guardar la oferta", e);
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno al guardar la oferta.");
         }
+
     }
 
     @GetMapping("/vendedor/{vendedorId}")
-    public ResponseEntity<List<Oferta>> obtenerOfertasPorVendedor(@PathVariable Long vendedorId) {
-        return ResponseEntity.ok(ofertaService.obtenerOfertasPorVendedor(vendedorId));
+    public ResponseEntity<List<OfertaDTO>> obtenerOfertasPorVendedor(
+            @PathVariable Long vendedorId,
+            @RequestParam Long ligaId) {
+        List<Oferta> ofertas = ofertaService.obtenerOfertasPorVendedorYLiga(vendedorId, ligaId);
+        List<OfertaDTO> ofertaDTOs = ofertas.stream().map(OfertaDTO::new).toList();
+        return ResponseEntity.ok(ofertaDTOs);
     }
 
     @GetMapping("/comprador/{compradorId}")
-    public ResponseEntity<List<Oferta>> obtenerOfertasPorComprador(@PathVariable Long compradorId) {
-        return ResponseEntity.ok(ofertaService.obtenerOfertasPorComprador(compradorId));
+    public ResponseEntity<List<OfertaDTO>> obtenerOfertasPorComprador(
+            @PathVariable Long compradorId,
+            @RequestParam Long ligaId) {
+        List<Oferta> ofertas = ofertaService.obtenerOfertasPorCompradorYLiga(compradorId, ligaId);
+        List<OfertaDTO> ofertaDTOs = ofertas.stream().map(OfertaDTO::new).toList();
+        return ResponseEntity.ok(ofertaDTOs);
     }
 
     @PostMapping("/aceptar/{id}")
     public ResponseEntity<Map<String, String>> aceptarOferta(@PathVariable Long id) {
         ofertaService.aceptarOferta(id);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Oferta aceptada y jugador transferido.");
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("message", "Oferta aceptada y jugador transferido."));
     }
 
     @DeleteMapping("/rechazar/{id}")
     public ResponseEntity<Map<String, String>> rechazarOferta(@PathVariable Long id) {
         ofertaService.eliminarOferta(id);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Oferta rechazada y eliminada.");
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("message", "Oferta rechazada y eliminada."));
     }
 
     @PostMapping("/contraoferta/{id}")
-    public ResponseEntity<Map<String, String>> hacerContraoferta(@PathVariable Long id, @RequestBody Oferta nuevaOferta) {
+    public ResponseEntity<Map<String, String>> hacerContraoferta(@PathVariable Long id,
+            @RequestBody Oferta nuevaOferta) {
         Oferta ofertaExistente = ofertaService.obtenerOfertaPorId(id)
                 .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
 
-        // Devolver dinero al comprador original porque la oferta original ya no está vigente
         Usuario compradorOriginal = ofertaExistente.getComprador();
         compradorOriginal.setDinero(compradorOriginal.getDinero().add(ofertaExistente.getMontoOferta()));
         usuarioService.usuarioRepository.save(compradorOriginal);
 
-        // Crear claramente la contraoferta
         nuevaOferta.setEstado(Oferta.EstadoOferta.CONTRAOFERTA);
         nuevaOferta.setVendedor(ofertaExistente.getComprador());
         nuevaOferta.setComprador(ofertaExistente.getVendedor());
+        nuevaOferta.setJugador(ofertaExistente.getJugador());
+        nuevaOferta.setLiga(ofertaExistente.getLiga());
 
-        ofertaService.crearContraoferta(nuevaOferta); // <-- Cambio aquí: método específico para contraofertas
+        ofertaService.crearOferta(nuevaOferta);
         ofertaService.eliminarOferta(ofertaExistente.getId());
 
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Contraoferta enviada correctamente.");
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("message", "Contraoferta enviada correctamente."));
     }
 
     @DeleteMapping("/{id}/retirar")
@@ -143,10 +153,9 @@ public class OfertaController {
         }
 
         Oferta oferta = ofertaOpt.get();
-
-        // Verificar si la oferta ya fue aceptada o rechazada
         if (oferta.getEstado() == Oferta.EstadoOferta.ACEPTADA || oferta.getEstado() == Oferta.EstadoOferta.RECHAZADA) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "❌ No puedes retirar una oferta que ya fue procesada."));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "❌ No puedes retirar una oferta que ya fue procesada."));
         }
 
         ofertaService.eliminarOferta(id);
@@ -156,9 +165,32 @@ public class OfertaController {
     @GetMapping("/nuevas/{vendedorId}")
     public ResponseEntity<Map<String, Boolean>> tieneOfertasNuevas(@PathVariable Long vendedorId) {
         boolean tieneNuevas = ofertaService.tieneOfertasNuevas(vendedorId);
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("tieneOfertasNuevas", tieneNuevas);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(Map.of("tieneOfertasNuevas", tieneNuevas));
+    }
+
+    @PostMapping("/marcar-leidas/{usuarioId}")
+    public ResponseEntity<?> marcarOfertasComoLeidas(@PathVariable Long usuarioId) {
+        try {
+            ofertaService.marcarOfertasComoLeidas(usuarioId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al marcar ofertas como leídas");
+        }
+    }
+
+    @GetMapping("/ultima-oferta/{compradorId}/{jugadorId}")
+    public ResponseEntity<OfertaDTO> obtenerUltimaOferta(
+            @PathVariable Long compradorId,
+            @PathVariable Long jugadorId,
+            @RequestParam Long ligaId) {
+
+        Optional<Oferta> ofertaOpt = ofertaService.obtenerUltimaOferta(compradorId, jugadorId, ligaId);
+
+        if (ofertaOpt.isPresent()) {
+            return ResponseEntity.ok(new OfertaDTO(ofertaOpt.get()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
 }

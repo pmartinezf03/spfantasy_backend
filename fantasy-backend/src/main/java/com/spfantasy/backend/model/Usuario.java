@@ -1,12 +1,25 @@
 package com.spfantasy.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -45,20 +58,27 @@ public class Usuario {
     }
 
     @ManyToMany
-    @JoinTable(
-            name = "plantilla_jugadores",
-            joinColumns = @JoinColumn(name = "usuario_id"),
-            inverseJoinColumns = @JoinColumn(name = "jugador_id")
-    )
+    @JoinTable(name = "plantilla_jugadores", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "jugador_id"))
     @JsonIgnore
     private List<Jugador> plantilla;
 
     @ManyToMany(mappedBy = "usuarios")
     private List<GrupoChat> grupos = new ArrayList<>();
 
-
+    @ManyToOne
+    @JoinColumn(name = "liga_id")
+    private Liga liga;
 
     public List<GrupoChat> getGrupos() {
         return grupos;
     }
+
+    public Liga getLiga() {
+        return liga;
+    }
+
+    public void setLiga(Liga liga) {
+        this.liga = liga;
+    }
+
 }

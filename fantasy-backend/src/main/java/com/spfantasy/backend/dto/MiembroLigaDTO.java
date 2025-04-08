@@ -3,12 +3,12 @@ package com.spfantasy.backend.dto;
 public class MiembroLigaDTO {
 
     private Long id;
-    private String nombre;
+    private String username;
     private String email;
 
-    public MiembroLigaDTO(Long id, String nombre, String email) {
+    public MiembroLigaDTO(Long id, String username, String email) {
         this.id = id;
-        this.nombre = nombre;
+        this.username = username;
         this.email = email;
     }
 
@@ -16,8 +16,8 @@ public class MiembroLigaDTO {
         this.id = id;
     }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setEmail(String email) {
@@ -28,8 +28,8 @@ public class MiembroLigaDTO {
         return id;
     }
 
-    public String getNombre() {
-        return nombre;
+    public String getUsername() {
+        return username;
     }
 
     public String getEmail() {

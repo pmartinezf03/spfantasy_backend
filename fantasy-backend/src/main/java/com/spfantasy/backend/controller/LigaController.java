@@ -1,6 +1,7 @@
 package com.spfantasy.backend.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.spfantasy.backend.dto.ActualizarLigaDTO;
 import com.spfantasy.backend.dto.CrearLigaDTO;
+import com.spfantasy.backend.dto.LigaDTO;
 import com.spfantasy.backend.dto.LigaUnidaDTO;
 import com.spfantasy.backend.dto.MiembroLigaDTO;
 import com.spfantasy.backend.dto.RankingUsuarioDTO;
@@ -91,6 +93,13 @@ public class LigaController {
     public ResponseEntity<List<Liga>> obtenerTodasLasLigas() {
         List<Liga> ligas = ligaService.obtenerTodasLasLigas();
         return ResponseEntity.ok(ligas);
+    }
+
+    @GetMapping("/usuario/{usuarioId}/liga")
+    public ResponseEntity<?> obtenerLigaDelUsuario(@PathVariable Long usuarioId) {
+        Optional<Liga> ligaOpt = ligaService.obtenerLigaDelUsuario(usuarioId);
+        return ligaOpt.map(liga -> ResponseEntity.ok(new LigaDTO(liga)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
 }

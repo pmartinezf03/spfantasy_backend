@@ -1,8 +1,18 @@
 package com.spfantasy.backend.model;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "ofertas")
@@ -13,8 +23,8 @@ public class Oferta {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "jugador_id", nullable = false)
-    private Jugador jugador;
+    @JoinColumn(name = "jugador_liga_id", nullable = false)
+    private JugadorLiga jugador;
 
     @ManyToOne
     @JoinColumn(name = "comprador_id", nullable = false)
@@ -37,14 +47,19 @@ public class Oferta {
     public enum EstadoOferta {
         PENDIENTE, ACEPTADA, RECHAZADA, CONTRAOFERTA
     }
+
     @Column(name = "leida_por_vendedor")
     private Boolean leidaPorVendedor = false;
+
+    @ManyToOne
+    @JoinColumn(name = "liga_id")
+    private Liga liga;
 
     public Long getId() {
         return id;
     }
 
-    public Jugador getJugador() {
+    public JugadorLiga getJugador() {
         return jugador;
     }
 
@@ -68,11 +83,19 @@ public class Oferta {
         return timestamp;
     }
 
+    public Boolean getLeidaPorVendedor() {
+        return leidaPorVendedor;
+    }
+
+    public Liga getLiga() {
+        return liga;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
 
-    public void setJugador(Jugador jugador) {
+    public void setJugador(JugadorLiga jugador) {
         this.jugador = jugador;
     }
 
@@ -96,12 +119,11 @@ public class Oferta {
         this.timestamp = timestamp;
     }
 
-    public Boolean getLeidaPorVendedor() {
-        return leidaPorVendedor;
-    }
-
     public void setLeidaPorVendedor(Boolean leidaPorVendedor) {
         this.leidaPorVendedor = leidaPorVendedor;
     }
 
+    public void setLiga(Liga liga) {
+        this.liga = liga;
+    }
 }
