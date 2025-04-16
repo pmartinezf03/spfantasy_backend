@@ -1,24 +1,25 @@
 package com.spfantasy.backend.service;
 
-import com.spfantasy.backend.config.JwtUtil;
-import com.spfantasy.backend.dto.UsuarioDTO;
-import com.spfantasy.backend.model.Jugador;
-import com.spfantasy.backend.model.Usuario;
-import com.spfantasy.backend.model.Role;
-import com.spfantasy.backend.repository.UsuarioRepository;
-import com.spfantasy.backend.repository.JugadorRepository;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Collections;
-import java.math.BigDecimal;
-import java.util.ArrayList;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import com.spfantasy.backend.config.JwtUtil;
+import com.spfantasy.backend.dto.UsuarioDTO;
+import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.Role;
+import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorRepository;
+import com.spfantasy.backend.repository.UsuarioRepository;
 
 @Service
 public class UsuarioService implements UserDetailsService {
@@ -27,7 +28,7 @@ public class UsuarioService implements UserDetailsService {
     public UsuarioRepository usuarioRepository;
 
     @Autowired
-    public JugadorRepository jugadorRepository; // Asegúrate de inyectar el repositorio de jugadores
+    public JugadorRepository jugadorRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -140,8 +141,7 @@ public class UsuarioService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 usuario.getUsername(),
                 usuario.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRole().name()))
-        );
+                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRole().name())));
     }
 
     public boolean guardarPlantilla(String username, List<Long> titularesIds, List<Long> suplentesIds) {
@@ -197,12 +197,16 @@ public class UsuarioService implements UserDetailsService {
 
     public List<UsuarioDTO> obtenerTodosComoDTO() {
         return usuarioRepository.findAll().stream()
-                .map(u -> new UsuarioDTO(
-                u.getId(),
-                u.getUsername(),
-                u.getRole().name()
-        ))
+                .map(UsuarioDTO::new) // ✅ Usa el constructor que recibe Usuario
                 .toList();
+    }
+
+    public Usuario guardarUsuario(Usuario usuario) {
+        return usuarioRepository.save(usuario);
+    }
+
+    public Usuario obtenerUsuarioPorId(Long id) {
+        return usuarioRepository.findById(id).orElse(null);
     }
 
 }

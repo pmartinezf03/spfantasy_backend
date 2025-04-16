@@ -1,7 +1,6 @@
 package com.spfantasy.backend.controller;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -10,7 +9,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.spfantasy.backend.dto.OfertaDTO;
 import com.spfantasy.backend.model.JugadorLiga;
@@ -29,12 +37,17 @@ public class OfertaController {
     private final OfertaService ofertaService;
     private final UsuarioService usuarioService;
     private final JugadorLigaRepository jugadorLigaRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public OfertaController(OfertaService ofertaService, UsuarioService usuarioService,
-            JugadorLigaRepository jugadorLigaRepository) {
+    public OfertaController(
+            OfertaService ofertaService,
+            UsuarioService usuarioService,
+            JugadorLigaRepository jugadorLigaRepository,
+            SimpMessagingTemplate messagingTemplate) {
         this.ofertaService = ofertaService;
         this.usuarioService = usuarioService;
         this.jugadorLigaRepository = jugadorLigaRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @PostMapping
@@ -44,16 +57,11 @@ public class OfertaController {
         String username = usuarioService.obtenerUsernameDesdeToken(token.replace("Bearer ", ""));
         Usuario comprador = usuarioService.obtenerUsuarioPorUsername(username);
 
-        // 🔍 Obtener jugador de la liga desde la BD
         JugadorLiga jugadorLiga = jugadorLigaRepository.findById(oferta.getJugador().getId())
                 .orElseThrow(() -> new RuntimeException("JugadorLiga no encontrado"));
 
         Usuario propietario = jugadorLiga.getPropietario();
 
-        logger.info("🟢 JugadorLiga encontrado: {} | Propietario: {}", jugadorLiga.getJugadorBase().getNombre(),
-                propietario != null ? propietario.getUsername() : "Sin propietario");
-
-        // ❌ Validaciones
         if (propietario == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El jugador no tiene propietario.");
         }
@@ -67,14 +75,12 @@ public class OfertaController {
                     .body("❌ No tienes suficiente dinero para esta oferta.");
         }
 
-        // Validar misma liga
         if (comprador.getLiga() == null || propietario.getLiga() == null ||
                 !comprador.getLiga().getId().equals(propietario.getLiga().getId())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Ambos usuarios deben estar en la misma liga para realizar una oferta.");
         }
 
-        // ✅ Guardar oferta
         oferta.setComprador(comprador);
         oferta.setVendedor(propietario);
         oferta.setEstado(Oferta.EstadoOferta.PENDIENTE);
@@ -83,13 +89,16 @@ public class OfertaController {
 
         try {
             Oferta nuevaOferta = ofertaService.crearOferta(oferta);
-            return ResponseEntity.ok(new OfertaDTO(nuevaOferta)); // ✅ DEVOLVEMOS SOLO LOS DATOS NECESARIOS
+            OfertaDTO dto = new OfertaDTO(nuevaOferta);
+
+            // ✅ Notificar al vendedor en tiempo real
+            messagingTemplate.convertAndSend("/chat/ofertas/" + nuevaOferta.getVendedor().getId(), dto);
+
+            return ResponseEntity.ok(dto);
         } catch (Exception e) {
             logger.error("❌ Error al guardar la oferta", e);
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno al guardar la oferta.");
         }
-
     }
 
     @GetMapping("/vendedor/{vendedorId}")
@@ -97,8 +106,7 @@ public class OfertaController {
             @PathVariable Long vendedorId,
             @RequestParam Long ligaId) {
         List<Oferta> ofertas = ofertaService.obtenerOfertasPorVendedorYLiga(vendedorId, ligaId);
-        List<OfertaDTO> ofertaDTOs = ofertas.stream().map(OfertaDTO::new).toList();
-        return ResponseEntity.ok(ofertaDTOs);
+        return ResponseEntity.ok(ofertas.stream().map(OfertaDTO::new).toList());
     }
 
     @GetMapping("/comprador/{compradorId}")
@@ -106,8 +114,7 @@ public class OfertaController {
             @PathVariable Long compradorId,
             @RequestParam Long ligaId) {
         List<Oferta> ofertas = ofertaService.obtenerOfertasPorCompradorYLiga(compradorId, ligaId);
-        List<OfertaDTO> ofertaDTOs = ofertas.stream().map(OfertaDTO::new).toList();
-        return ResponseEntity.ok(ofertaDTOs);
+        return ResponseEntity.ok(ofertas.stream().map(OfertaDTO::new).toList());
     }
 
     @PostMapping("/aceptar/{id}")
@@ -123,14 +130,16 @@ public class OfertaController {
     }
 
     @PostMapping("/contraoferta/{id}")
-    public ResponseEntity<Map<String, String>> hacerContraoferta(@PathVariable Long id,
+    public ResponseEntity<Map<String, String>> hacerContraoferta(
+            @PathVariable Long id,
             @RequestBody Oferta nuevaOferta) {
+
         Oferta ofertaExistente = ofertaService.obtenerOfertaPorId(id)
                 .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
 
         Usuario compradorOriginal = ofertaExistente.getComprador();
         compradorOriginal.setDinero(compradorOriginal.getDinero().add(ofertaExistente.getMontoOferta()));
-        usuarioService.usuarioRepository.save(compradorOriginal);
+        usuarioService.guardarUsuario(compradorOriginal);
 
         nuevaOferta.setEstado(Oferta.EstadoOferta.CONTRAOFERTA);
         nuevaOferta.setVendedor(ofertaExistente.getComprador());
@@ -138,8 +147,11 @@ public class OfertaController {
         nuevaOferta.setJugador(ofertaExistente.getJugador());
         nuevaOferta.setLiga(ofertaExistente.getLiga());
 
-        ofertaService.crearOferta(nuevaOferta);
+        Oferta contra = ofertaService.crearOferta(nuevaOferta);
         ofertaService.eliminarOferta(ofertaExistente.getId());
+
+        // ✅ Notificar al comprador original (que ahora es vendedor)
+        messagingTemplate.convertAndSend("/chat/ofertas/" + contra.getVendedor().getId(), new OfertaDTO(contra));
 
         return ResponseEntity.ok(Map.of("message", "Contraoferta enviada correctamente."));
     }
@@ -186,11 +198,6 @@ public class OfertaController {
 
         Optional<Oferta> ofertaOpt = ofertaService.obtenerUltimaOferta(compradorId, jugadorId, ligaId);
 
-        if (ofertaOpt.isPresent()) {
-            return ResponseEntity.ok(new OfertaDTO(ofertaOpt.get()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        return ResponseEntity.ok(ofertaOpt.map(OfertaDTO::new).orElse(null));
     }
-
 }

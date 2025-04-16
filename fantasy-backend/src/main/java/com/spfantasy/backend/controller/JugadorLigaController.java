@@ -31,11 +31,14 @@ public class JugadorLigaController {
 
     // 🔹 Obtener los jugadores que tiene un usuario en una liga (su plantilla)
     @GetMapping("/mis-jugadores")
-    public ResponseEntity<List<JugadorLiga>> obtenerJugadoresDeUsuario(
+    public ResponseEntity<List<JugadorLigaDTO>> obtenerJugadoresDeUsuario(
             @RequestParam Long ligaId,
             @RequestParam Long usuarioId) {
         List<JugadorLiga> plantilla = jugadorLigaService.obtenerJugadoresDeUsuarioEnLiga(ligaId, usuarioId);
-        return ResponseEntity.ok(plantilla);
+        List<JugadorLigaDTO> dtoList = plantilla.stream()
+                .map(JugadorLigaDTO::new)
+                .toList();
+        return ResponseEntity.ok(dtoList);
     }
 
     @GetMapping("/liga")

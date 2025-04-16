@@ -12,6 +12,7 @@ public class OfertaDTO {
     private String nombreJugador;
     private BigDecimal montoOferta;
     private String estado;
+    private JugadorLigaDTO jugador;
 
     // Constructor
     public OfertaDTO(Oferta oferta) {
@@ -22,6 +23,7 @@ public class OfertaDTO {
         this.nombreJugador = oferta.getJugador().getJugadorBase().getNombre();
         this.montoOferta = oferta.getMontoOferta();
         this.estado = oferta.getEstado().name();
+        this.jugador = new JugadorLigaDTO(oferta.getJugador());
     }
 
     public Long getId() {
@@ -78,6 +80,14 @@ public class OfertaDTO {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    public JugadorLigaDTO getJugador() {
+        return jugador;
+    }
+
+    public void setJugador(JugadorLigaDTO jugador) {
+        this.jugador = jugador;
     }
 
 }

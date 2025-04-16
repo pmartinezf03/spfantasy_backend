@@ -49,6 +49,9 @@ public class Usuario {
     @Column(name = "puntos")
     private int puntos;
 
+    @Column(name = "dinero_pendiente", nullable = false)
+    private BigDecimal dineroPendiente = BigDecimal.ZERO;
+
     public int getPuntos() {
         return puntos;
     }
@@ -79,6 +82,14 @@ public class Usuario {
 
     public void setLiga(Liga liga) {
         this.liga = liga;
+    }
+
+    public BigDecimal getDineroPendiente() {
+        return dineroPendiente;
+    }
+
+    public void setDineroPendiente(BigDecimal dineroPendiente) {
+        this.dineroPendiente = dineroPendiente;
     }
 
 }

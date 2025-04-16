@@ -1,27 +1,36 @@
 package com.spfantasy.backend.controller;
 
-import com.spfantasy.backend.model.Jugador;
-import com.spfantasy.backend.model.Usuario;
-import com.spfantasy.backend.service.UsuarioService;
-import com.spfantasy.backend.config.JwtUtil;
-import com.spfantasy.backend.dto.JugadorDTO;
-import com.spfantasy.backend.dto.LoginResponseDTO;
-import com.spfantasy.backend.dto.UsuarioDTO;
-import com.spfantasy.backend.model.Role;
-import com.spfantasy.backend.repository.UsuarioRepository;
 import java.math.BigDecimal;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.spfantasy.backend.config.JwtUtil;
+import com.spfantasy.backend.dto.JugadorDTO;
+import com.spfantasy.backend.dto.LoginResponseDTO;
+import com.spfantasy.backend.dto.UsuarioDTO;
+import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.Role;
+import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.UsuarioRepository;
+import com.spfantasy.backend.service.UsuarioService;
 
 @RestController
-@RequestMapping("/usuarios")
+@RequestMapping("/api/usuarios")
 public class UsuarioController {
 
     @Autowired
@@ -53,8 +62,7 @@ public class UsuarioController {
                     user.getUsername(),
                     user.getEmail(),
                     user.getRole().name(),
-                    token
-            );
+                    token);
 
             Map<String, Object> response = new HashMap<>();
             response.put("user", loginResponse);
@@ -67,8 +75,9 @@ public class UsuarioController {
 
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/by-username/{username}")
     public ResponseEntity<?> obtenerUsuario(@PathVariable String username) {
+
         Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
 
         if (usuario != null) {
@@ -90,8 +99,7 @@ public class UsuarioController {
                                 jugador.getT2(),
                                 jugador.getT3(),
                                 jugador.getFp(),
-                                jugador.getPropietario()
-                        );
+                                jugador.getPropietario());
                         dto.setEsTitular(true);
                         return dto;
                     }).toList();
@@ -114,8 +122,7 @@ public class UsuarioController {
                                 jugador.getT2(),
                                 jugador.getT3(),
                                 jugador.getFp(),
-                                jugador.getPropietario()
-                        );
+                                jugador.getPropietario());
                         dto.setEsTitular(false);
                         return dto;
                     }).toList();
@@ -152,7 +159,8 @@ public class UsuarioController {
     }
 
     @PostMapping("/{username}/comprar")
-    public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username, @RequestBody Jugador jugadorRequest) {
+    public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username,
+            @RequestBody Jugador jugadorRequest) {
         System.out.println("📩 Recibido ID del jugador para compra: " + jugadorRequest.getId());
 
         Optional<Jugador> jugadorOpt = usuarioService.jugadorRepository.findById(jugadorRequest.getId());
@@ -165,7 +173,8 @@ public class UsuarioController {
         }
 
         Jugador jugador = jugadorOpt.get();
-        System.out.println("🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
+        System.out.println(
+                "🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
 
         boolean exito = usuarioService.comprarJugador(username, jugador);
         Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
@@ -178,16 +187,20 @@ public class UsuarioController {
             System.out.println("✅ Compra exitosa: Jugador " + jugador.getNombre() + " comprado por " + username);
             return ResponseEntity.ok(response);
         } else {
-            response.put("mensaje", "No se pudo comprar el jugador. Revisa dinero disponible o capacidad de plantilla.");
+            response.put("mensaje",
+                    "No se pudo comprar el jugador. Revisa dinero disponible o capacidad de plantilla.");
             response.put("status", "error");
-            System.out.println("❌ Error: No se pudo comprar el jugador. Posibles causas: dinero insuficiente, jugador ya comprado o banquillo lleno.");
+            System.out.println(
+                    "❌ Error: No se pudo comprar el jugador. Posibles causas: dinero insuficiente, jugador ya comprado o banquillo lleno.");
             return ResponseEntity.badRequest().body(response);
         }
     }
 
     @PostMapping("/{username}/vender")
-    public ResponseEntity<Map<String, Object>> venderJugador(@PathVariable String username, @RequestBody Jugador jugador) {
-        System.out.println("🎯 Recibiendo solicitud para vender el jugador: " + jugador.getNombre() + " (ID: " + jugador.getId() + ")");
+    public ResponseEntity<Map<String, Object>> venderJugador(@PathVariable String username,
+            @RequestBody Jugador jugador) {
+        System.out.println("🎯 Recibiendo solicitud para vender el jugador: " + jugador.getNombre() + " (ID: "
+                + jugador.getId() + ")");
 
         boolean exito = usuarioService.venderJugador(username, jugador);
         Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
@@ -196,7 +209,7 @@ public class UsuarioController {
         if (exito && usuario != null) {
             response.put("mensaje", "Jugador vendido exitosamente.");
             response.put("status", "success");
-            response.put("dinero", usuario.getDinero());  // ✅ Dinero actualizado
+            response.put("dinero", usuario.getDinero()); // ✅ Dinero actualizado
             return ResponseEntity.ok(response);
         } else {
             response.put("mensaje", "No se pudo vender el jugador.");
@@ -206,8 +219,10 @@ public class UsuarioController {
     }
 
     @PostMapping("/{username}/guardar-plantilla")
-    public ResponseEntity<Map<String, Object>> guardarPlantilla(@PathVariable String username, @RequestBody Map<String, List<Long>> plantilla) {
-        boolean exito = usuarioService.guardarPlantilla(username, plantilla.get("titulares"), plantilla.get("suplentes"));
+    public ResponseEntity<Map<String, Object>> guardarPlantilla(@PathVariable String username,
+            @RequestBody Map<String, List<Long>> plantilla) {
+        boolean exito = usuarioService.guardarPlantilla(username, plantilla.get("titulares"),
+                plantilla.get("suplentes"));
 
         Map<String, Object> response = new HashMap<>();
         if (exito) {
@@ -229,6 +244,16 @@ public class UsuarioController {
             return ResponseEntity.ok(usuarioOpt.get().getDinero());
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(BigDecimal.ZERO);
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UsuarioDTO> obtenerUsuarioPorId(@PathVariable Long id) {
+        Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
+        if (usuario != null) {
+            return ResponseEntity.ok(new UsuarioDTO(usuario));
+        } else {
+            return ResponseEntity.notFound().build();
         }
     }
 

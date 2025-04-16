@@ -34,11 +34,14 @@ public class OfertaService {
         Usuario comprador = usuarioRepository.findById(oferta.getComprador().getId())
                 .orElseThrow(() -> new RuntimeException("Comprador no encontrado"));
 
-        if (comprador.getDinero().compareTo(oferta.getMontoOferta()) < 0) {
-            throw new RuntimeException("No tienes suficiente dinero para esta oferta.");
+        BigDecimal totalDisponible = comprador.getDinero().subtract(comprador.getDineroPendiente());
+
+        if (totalDisponible.compareTo(oferta.getMontoOferta()) < 0) {
+            throw new RuntimeException("No tienes suficiente dinero disponible para esta oferta.");
         }
 
-        comprador.setDinero(comprador.getDinero().subtract(oferta.getMontoOferta()));
+        // No se descuenta, solo se reserva
+        comprador.setDineroPendiente(comprador.getDineroPendiente().add(oferta.getMontoOferta()));
         usuarioRepository.save(comprador);
 
         return ofertaRepository.save(oferta);
@@ -62,10 +65,10 @@ public class OfertaService {
                 .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
 
         Usuario comprador = oferta.getComprador();
-        comprador.setDinero(comprador.getDinero().add(oferta.getMontoOferta()));
+        comprador.setDineroPendiente(comprador.getDineroPendiente().subtract(oferta.getMontoOferta()));
         usuarioRepository.save(comprador);
 
-        ofertaRepository.deleteById(id);
+        ofertaRepository.delete(oferta);
     }
 
     @Transactional
@@ -77,14 +80,17 @@ public class OfertaService {
         Usuario vendedor = oferta.getVendedor();
         JugadorLiga jugador = oferta.getJugador();
 
+        // Liberar dinero pendiente y restarlo de dinero real
+        comprador.setDineroPendiente(comprador.getDineroPendiente().subtract(oferta.getMontoOferta()));
+        comprador.setDinero(comprador.getDinero().subtract(oferta.getMontoOferta()));
+
+        vendedor.setDinero(vendedor.getDinero().add(oferta.getMontoOferta()));
+
         jugador.setPropietario(comprador);
         jugador.setDisponible(false);
 
-        comprador.setDinero(comprador.getDinero().subtract(oferta.getMontoOferta()));
-        vendedor.setDinero(vendedor.getDinero().add(oferta.getMontoOferta()));
-
-        usuarioRepository.save(vendedor);
         usuarioRepository.save(comprador);
+        usuarioRepository.save(vendedor);
         jugadorLigaRepository.save(jugador);
         ofertaRepository.delete(oferta);
     }
