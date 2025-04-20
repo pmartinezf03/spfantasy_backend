@@ -15,7 +15,7 @@
     <description>API para el fantasy basket</description>
     <url/>
     <properties>
-        <java.version>17</java.version>
+        <java.version>23</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -99,13 +99,6 @@
                 <configuration>
                     <source>23</source>
                     <target>23</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                            <version>1.18.30</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -114,4 +107,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
