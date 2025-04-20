@@ -1,11 +1,12 @@
-# Fase 1: construir el jar
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+# Etapa 1: Build con Maven y Java 17
+FROM maven:3.9.4-eclipse-temurin-17 as build
 WORKDIR /app
 COPY . .
 RUN mvn clean package -DskipTests
 
-# Fase 2: ejecutar el .jar generado
-FROM eclipse-temurin:21-jdk
+# Etapa 2ewe: Imagen final ligera solo con Java
+FROM eclipse-temurin:17-jre
 WORKDIR /app
-COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
