@@ -20,7 +20,9 @@ public class MensajeController {
     @PostMapping("/enviar")
     public Mensaje enviarMensaje(@RequestBody Map<String, Object> request) {
         Long remitenteId = Long.valueOf(request.get("remitenteId").toString());
-        Long destinatarioId = request.get("destinatarioId") != null ? Long.valueOf(request.get("destinatarioId").toString()) : null;
+        Long destinatarioId = request.get("destinatarioId") != null
+                ? Long.valueOf(request.get("destinatarioId").toString())
+                : null;
         Long grupoId = request.get("grupoId") != null ? Long.valueOf(request.get("grupoId").toString()) : null;
         String contenido = (String) request.get("contenido");
 
@@ -51,6 +53,15 @@ public class MensajeController {
     public ResponseEntity<?> obtenerTodosMisMensajesCompat(@PathVariable Long usuarioId) {
         List<MensajeDTO> mensajes = mensajeService.obtenerTodosMisMensajes(usuarioId);
         return ResponseEntity.ok(mensajes);
+    }
+
+    @PostMapping("/enviar/privado")
+    public Mensaje enviarPorAlias(@RequestBody Map<String, String> request) {
+        String remitenteAlias = request.get("remitenteAlias");
+        String destinatarioAlias = request.get("destinatarioAlias");
+        String contenido = request.get("contenido");
+
+        return mensajeService.enviarMensajePorAlias(remitenteAlias, destinatarioAlias, contenido);
     }
 
 }

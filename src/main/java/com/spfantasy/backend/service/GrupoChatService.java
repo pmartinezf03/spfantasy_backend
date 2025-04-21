@@ -6,6 +6,9 @@ import com.spfantasy.backend.repository.GrupoChatRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.spfantasy.backend.dto.GrupoChatDTO;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +25,12 @@ public class GrupoChatService {
     // ✅ Obtener todos los grupos de chat
     public List<GrupoChat> obtenerTodosLosGrupos() {
         return grupoChatRepository.findAll();
+    }
+
+    public List<GrupoChatDTO> obtenerTodosLosGruposDTO() {
+        return grupoChatRepository.findAll().stream()
+                .map(this::convertirADTO)
+                .collect(Collectors.toList());
     }
 
     // ✅ Crear un nuevo grupo de chat con un usuario como creador
@@ -60,6 +69,19 @@ public class GrupoChatService {
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
         return grupoChatRepository.findByUsuariosContaining(usuario);
+    }
+
+    private GrupoChatDTO convertirADTO(GrupoChat grupo) {
+        Set<Long> usuariosIds = grupo.getUsuarios().stream()
+                .map(Usuario::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        return new GrupoChatDTO(
+                grupo.getId(),
+                grupo.getNombre(),
+                grupo.getDescripcion(),
+                grupo.getCreador().getId(),
+                usuariosIds);
     }
 
 }

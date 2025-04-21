@@ -15,4 +15,5 @@ public class MensajeDTO {
     private Long grupoId;
     private String contenido;
     private LocalDateTime timestamp;
+    private String remitenteAlias;
 }

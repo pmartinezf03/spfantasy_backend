@@ -1,5 +1,6 @@
 package com.spfantasy.backend.controller;
 
+import com.spfantasy.backend.dto.GrupoChatDTO;
 import com.spfantasy.backend.model.GrupoChat;
 import com.spfantasy.backend.service.GrupoChatService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,8 @@ public class GrupoChatController {
 
     // ✅ Obtener todos los grupos de chat
     @GetMapping
-    public List<GrupoChat> obtenerTodosLosGrupos() {
-        return grupoChatService.obtenerTodosLosGrupos();
+    public List<GrupoChatDTO> obtenerTodosLosGrupos() {
+        return grupoChatService.obtenerTodosLosGruposDTO();
     }
 
     // ✅ Crear un nuevo grupo de chat

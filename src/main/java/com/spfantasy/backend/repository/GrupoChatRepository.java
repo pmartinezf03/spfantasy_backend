@@ -10,9 +10,10 @@ import java.util.Optional;
 
 @Repository
 public interface GrupoChatRepository extends JpaRepository<GrupoChat, Long> {
-Optional<GrupoChat> findByNombreAndPasswordGrupo(String nombre, String passwordGrupo);
-List<GrupoChat> findByUsuariosContaining(Usuario usuario);
+    Optional<GrupoChat> findByNombreAndPasswordGrupo(String nombre, String passwordGrupo);
+
+    List<GrupoChat> findByUsuariosContaining(Usuario usuario);
+
+    Optional<GrupoChat> findByNombre(String nombre);
 
 }
-
-

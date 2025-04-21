@@ -12,10 +12,12 @@ import com.spfantasy.backend.dto.LigaUnidaDTO;
 import com.spfantasy.backend.dto.MiembroLigaDTO;
 import com.spfantasy.backend.dto.RankingUsuarioDTO;
 import com.spfantasy.backend.dto.UnirseLigaDTO;
+import com.spfantasy.backend.model.GrupoChat;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Liga;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.model.UsuarioLiga;
+import com.spfantasy.backend.repository.GrupoChatRepository;
 import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.LigaRepository;
 import com.spfantasy.backend.repository.UsuarioLigaRepository;
@@ -41,6 +43,9 @@ public class LigaService {
     @Autowired
     private JugadorLigaRepository jugadorLigaRepository;
 
+    @Autowired
+    private GrupoChatRepository grupoChatRepository;
+
     @Transactional
     public Liga crearLiga(String nombre, String codigoInvitacion, Long creadorId) {
         Usuario creador = usuarioRepository.findById(creadorId)
@@ -64,8 +69,16 @@ public class LigaService {
         ul.setLiga(liga);
         usuarioLigaRepository.save(ul);
 
-        // Crear los jugadores de la liga
+        // Crear jugadores para la liga
         jugadorLigaService.generarJugadoresParaLiga(liga);
+
+        // ✅ Crear grupo de chat para la liga
+        GrupoChat grupoLiga = new GrupoChat();
+        grupoLiga.setNombre("liga-" + liga.getId()); // nombre único basado en id
+        grupoLiga.setDescripcion("Chat para la liga " + liga.getNombre());
+        grupoLiga.setCreador(creador);
+        grupoLiga.getUsuarios().add(creador); // Añadir al creador como primer miembro
+        grupoChatRepository.save(grupoLiga);
 
         return liga;
     }
@@ -95,6 +108,14 @@ public class LigaService {
 
         // 👉 Repartir jugadores iniciales
         jugadorLigaService.repartirJugadoresIniciales(usuario, liga);
+
+        // ✅ Unir al usuario al grupo de chat de la liga
+        String nombreGrupo = "liga-" + liga.getId();
+        GrupoChat grupo = grupoChatRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new RuntimeException("Grupo de chat de la liga no encontrado"));
+
+        grupo.getUsuarios().add(usuario);
+        grupoChatRepository.save(grupo);
 
         return new LigaUnidaDTO(liga.getId(), liga.getNombre(), "Te has unido correctamente");
     }

@@ -52,14 +52,6 @@ public class Usuario {
     @Column(name = "dinero_pendiente", nullable = false)
     private BigDecimal dineroPendiente = BigDecimal.ZERO;
 
-    public int getPuntos() {
-        return puntos;
-    }
-
-    public void setPuntos(int puntos) {
-        this.puntos = puntos;
-    }
-
     @ManyToMany
     @JoinTable(name = "plantilla_jugadores", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "jugador_id"))
     @JsonIgnore
@@ -71,6 +63,17 @@ public class Usuario {
     @ManyToOne
     @JoinColumn(name = "liga_id")
     private Liga liga;
+
+    @Column(unique = true)
+    private String alias;
+
+    public int getPuntos() {
+        return puntos;
+    }
+
+    public void setPuntos(int puntos) {
+        this.puntos = puntos;
+    }
 
     public List<GrupoChat> getGrupos() {
         return grupos;
@@ -90,6 +93,66 @@ public class Usuario {
 
     public void setDineroPendiente(BigDecimal dineroPendiente) {
         this.dineroPendiente = dineroPendiente;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public BigDecimal getDinero() {
+        return dinero;
+    }
+
+    public List<Jugador> getPlantilla() {
+        return plantilla;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public void setDinero(BigDecimal dinero) {
+        this.dinero = dinero;
+    }
+
+    public void setPlantilla(List<Jugador> plantilla) {
+        this.plantilla = plantilla;
+    }
+
+    public void setGrupos(List<GrupoChat> grupos) {
+        this.grupos = grupos;
     }
 
 }

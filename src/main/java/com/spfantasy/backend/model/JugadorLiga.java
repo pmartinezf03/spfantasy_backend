@@ -1,6 +1,7 @@
 package com.spfantasy.backend.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +42,9 @@ public class JugadorLiga {
 
     @Column(name = "foto_url")
     private String fotoUrl;
+
+    @Column(name = "fecha_adquisicion")
+    private LocalDateTime fechaAdquisicion;
 
     private Integer pts;
     private Integer min;
@@ -103,6 +107,14 @@ public class JugadorLiga {
 
     public void setFp(Integer fp) {
         this.fp = fp;
+    }
+
+    public LocalDateTime getFechaAdquisicion() {
+        return fechaAdquisicion;
+    }
+
+    public void setFechaAdquisicion(LocalDateTime fechaAdquisicion) {
+        this.fechaAdquisicion = fechaAdquisicion;
     }
 
     public Long getId() {

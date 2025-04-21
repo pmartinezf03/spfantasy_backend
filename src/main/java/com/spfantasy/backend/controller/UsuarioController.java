@@ -257,4 +257,40 @@ public class UsuarioController {
         }
     }
 
+    @GetMapping("/alias/{alias}")
+    public Usuario buscarPorAlias(@PathVariable String alias) {
+        return usuarioService.buscarPorAlias(alias);
+    }
+
+    @PostMapping("/{username}/comprar-liga")
+    public ResponseEntity<Map<String, Object>> comprarJugadorDeLiga(
+            @PathVariable String username,
+            @RequestParam Long jugadorLigaId,
+            @RequestParam Long ligaId) {
+
+        System.out.println("📥 Compra directa de jugadorLigaId=" + jugadorLigaId + " en ligaId=" + ligaId);
+
+        Map<String, Object> response = new HashMap<>();
+        try {
+            boolean exito = usuarioService.comprarJugadorDeLiga(username, jugadorLigaId, ligaId);
+            Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+
+            if (exito && usuario != null) {
+                response.put("mensaje", "Compra directa exitosa.");
+                response.put("status", "success");
+                response.put("dinero", usuario.getDinero());
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("mensaje", "No se pudo realizar la compra.");
+                response.put("status", "error");
+                return ResponseEntity.badRequest().body(response);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error en compra directa: " + e.getMessage());
+            response.put("mensaje", e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
 }

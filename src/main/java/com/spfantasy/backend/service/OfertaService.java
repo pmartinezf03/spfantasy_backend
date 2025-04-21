@@ -9,10 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Oferta;
+import com.spfantasy.backend.model.Transaccion;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.OfertaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
+import com.spfantasy.backend.repository.TransaccionRepository;
 
 @Service
 public class OfertaService {
@@ -20,13 +22,17 @@ public class OfertaService {
     private final OfertaRepository ofertaRepository;
     private final UsuarioRepository usuarioRepository;
     private final JugadorLigaRepository jugadorLigaRepository;
+    private final TransaccionRepository transaccionRepository;
 
     public OfertaService(OfertaRepository ofertaRepository,
             UsuarioRepository usuarioRepository,
-            JugadorLigaRepository jugadorLigaRepository) {
+            JugadorLigaRepository jugadorLigaRepository,
+            TransaccionRepository transaccionRepository) {
         this.ofertaRepository = ofertaRepository;
         this.usuarioRepository = usuarioRepository;
         this.jugadorLigaRepository = jugadorLigaRepository;
+        this.transaccionRepository = transaccionRepository;
+
     }
 
     @Transactional
@@ -66,9 +72,12 @@ public class OfertaService {
 
         Usuario comprador = oferta.getComprador();
         comprador.setDineroPendiente(comprador.getDineroPendiente().subtract(oferta.getMontoOferta()));
-        usuarioRepository.save(comprador);
 
-        ofertaRepository.delete(oferta);
+        // ✅ En lugar de borrar, actualiza el estado
+        oferta.setEstado(Oferta.EstadoOferta.RECHAZADA); // o RETIRADA si prefieres
+
+        usuarioRepository.save(comprador);
+        ofertaRepository.save(oferta);
     }
 
     @Transactional
@@ -86,13 +95,31 @@ public class OfertaService {
 
         vendedor.setDinero(vendedor.getDinero().add(oferta.getMontoOferta()));
 
+        // Transferencia del jugador
         jugador.setPropietario(comprador);
         jugador.setDisponible(false);
+
+        // 🆕 Establecer fecha de adquisición
+        jugador.setFechaAdquisicion(oferta.getTimestamp());
+
+        // ✅ Actualizar estado de la oferta
+        oferta.setEstado(Oferta.EstadoOferta.ACEPTADA);
 
         usuarioRepository.save(comprador);
         usuarioRepository.save(vendedor);
         jugadorLigaRepository.save(jugador);
-        ofertaRepository.delete(oferta);
+        ofertaRepository.save(oferta);
+        // 💾 Registrar transacción para comprador y vendedor
+        Transaccion transaccion = new Transaccion();
+        transaccion.setJugador(jugador);
+        transaccion.setComprador(comprador);
+        transaccion.setVendedor(vendedor);
+        transaccion.setPrecio(oferta.getMontoOferta().intValue());
+        transaccion.setFecha(oferta.getTimestamp());
+        transaccion.setLiga(oferta.getLiga());
+
+        transaccionRepository.save(transaccion);
+
     }
 
     @Transactional
