@@ -9,4 +9,7 @@ import java.util.Optional;
 @Repository
 public interface LigaRepository extends JpaRepository<Liga, Long> {
     Optional<Liga> findByCodigoInvitacion(String codigoInvitacion);
+
+    boolean existsByCodigoInvitacion(String codigoInvitacion);
+
 }

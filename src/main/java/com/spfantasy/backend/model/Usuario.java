@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.spfantasy.backend.model.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,10 +61,6 @@ public class Usuario {
     @ManyToMany(mappedBy = "usuarios")
     private List<GrupoChat> grupos = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "liga_id")
-    private Liga liga;
-
     @Column(unique = true)
     private String alias;
 
@@ -77,14 +74,6 @@ public class Usuario {
 
     public List<GrupoChat> getGrupos() {
         return grupos;
-    }
-
-    public Liga getLiga() {
-        return liga;
-    }
-
-    public void setLiga(Liga liga) {
-        this.liga = liga;
     }
 
     public BigDecimal getDineroPendiente() {

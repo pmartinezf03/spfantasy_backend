@@ -1,7 +1,9 @@
 package com.spfantasy.backend.service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,9 +53,17 @@ public class LigaService {
         Usuario creador = usuarioRepository.findById(creadorId)
                 .orElseThrow(() -> new RuntimeException("Creador no encontrado"));
 
-        // ❌ Si ya pertenece a una liga, no puede crear otra
+        if (!creador.getRole().name().equalsIgnoreCase("admin") &&
+                !creador.getRole().name().equalsIgnoreCase("vip")) {
+            throw new RuntimeException("Solo administradores o usuarios VIP pueden crear ligas.");
+        }
+
         if (usuarioLigaRepository.existsByUsuarioId(creadorId)) {
             throw new RuntimeException("Este usuario ya pertenece a una liga");
+        }
+
+        if (ligaRepository.existsByCodigoInvitacion(codigoInvitacion)) {
+            throw new RuntimeException("El código de invitación ya está en uso");
         }
 
         Liga liga = new Liga();
@@ -61,26 +71,38 @@ public class LigaService {
         liga.setCodigoInvitacion(codigoInvitacion);
         liga.setCreador(creador);
 
-        ligaRepository.save(liga);
+        Liga ligaGuardada = ligaRepository.save(liga);
 
-        // Relacionar creador con la liga
+        // 🔧 Asignar la liga al usuario y forzar persistencia inmediata
+        // ✅ Guardar la relación en usuarios_liga
         UsuarioLiga ul = new UsuarioLiga();
         ul.setUsuario(creador);
-        ul.setLiga(liga);
+        ul.setLiga(ligaGuardada);
         usuarioLigaRepository.save(ul);
 
-        // Crear jugadores para la liga
-        jugadorLigaService.generarJugadoresParaLiga(liga);
+        // ✅ Ya NO hace falta setLiga, ni save, ni verificación
 
-        // ✅ Crear grupo de chat para la liga
+        // Guardar relación en usuarios_liga
+        ul.setUsuario(creador);
+        ul.setLiga(ligaGuardada);
+        usuarioLigaRepository.save(ul);
+
+        // Repartir jugadores
+        // ✅ Primero generar todos los jugadores para la liga
+        jugadorLigaService.generarJugadoresParaLiga(ligaGuardada);
+
+        // ✅ Luego repartir 10 jugadores aleatorios al creador
+        jugadorLigaService.repartirJugadoresIniciales(creador, ligaGuardada);
+
+        // Crear grupo de chat
         GrupoChat grupoLiga = new GrupoChat();
-        grupoLiga.setNombre("liga-" + liga.getId()); // nombre único basado en id
-        grupoLiga.setDescripcion("Chat para la liga " + liga.getNombre());
+        grupoLiga.setNombre("liga-" + ligaGuardada.getId());
+        grupoLiga.setDescripcion("Chat para la liga " + ligaGuardada.getNombre());
         grupoLiga.setCreador(creador);
-        grupoLiga.getUsuarios().add(creador); // Añadir al creador como primer miembro
+        grupoLiga.getUsuarios().add(creador);
         grupoChatRepository.save(grupoLiga);
 
-        return liga;
+        return ligaGuardada;
     }
 
     @Transactional
@@ -96,12 +118,13 @@ public class LigaService {
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // 👉 Actualizar el campo liga_id en el usuario
-        usuario.setLiga(liga);
-        usuarioRepository.save(usuario);
-
         // 👉 Guardar la relación en UsuarioLiga
         UsuarioLiga ul = new UsuarioLiga();
+        ul.setLiga(liga);
+        ul.setUsuario(usuario);
+        usuarioLigaRepository.save(ul);
+
+        // 👉 Guardar la relación en UsuarioLiga
         ul.setLiga(liga);
         ul.setUsuario(usuario);
         usuarioLigaRepository.save(ul);
@@ -109,12 +132,22 @@ public class LigaService {
         // 👉 Repartir jugadores iniciales
         jugadorLigaService.repartirJugadoresIniciales(usuario, liga);
 
-        // ✅ Unir al usuario al grupo de chat de la liga
+        // ✅ Buscar o crear grupo de chat de la liga
         String nombreGrupo = "liga-" + liga.getId();
-        GrupoChat grupo = grupoChatRepository.findByNombre(nombreGrupo)
-                .orElseThrow(() -> new RuntimeException("Grupo de chat de la liga no encontrado"));
 
+        GrupoChat grupo = grupoChatRepository.findByNombre(nombreGrupo).orElse(null);
+
+        if (grupo == null) {
+            grupo = new GrupoChat();
+            grupo.setNombre(nombreGrupo);
+            grupo.setDescripcion("Chat para la liga " + liga.getNombre());
+            grupo.setCreador(liga.getCreador());
+            grupo.setUsuarios(new HashSet<>()); // Asegúrate que no sea null
+        }
+
+        // Añadir el usuario si no estaba
         grupo.getUsuarios().add(usuario);
+
         grupoChatRepository.save(grupo);
 
         return new LigaUnidaDTO(liga.getId(), liga.getNombre(), "Te has unido correctamente");
@@ -140,10 +173,6 @@ public class LigaService {
 
         // Eliminar relación en UsuarioLiga
         usuarioLigaRepository.deleteByUsuarioIdAndLigaId(usuarioId, ligaId);
-
-        // ❌ Quitar el campo liga_id del usuario
-        usuario.setLiga(null);
-        usuarioRepository.save(usuario);
 
         // Liberar los jugadores del usuario en esta liga
         List<JugadorLiga> jugadores = jugadorLigaRepository.findByLiga_IdAndPropietario_Id(ligaId, usuarioId);
@@ -234,8 +263,11 @@ public class LigaService {
     }
 
     public Optional<Liga> obtenerLigaDelUsuario(Long usuarioId) {
-        return usuarioRepository.findById(usuarioId)
-                .map(Usuario::getLiga);
+        return usuarioLigaRepository.findAllByUsuarioId(usuarioId)
+                .stream()
+                .findFirst()
+                .map(UsuarioLiga::getLiga);
+
     }
 
 }

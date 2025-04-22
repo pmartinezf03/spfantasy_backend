@@ -100,8 +100,6 @@
                 <configuration>
                     <source>23</source>
                     <target>23</target>
-<<<<<<< HEAD:pom.xml
-=======
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -109,7 +107,6 @@
                             <version>1.18.38</version>
                         </path>
                     </annotationProcessorPaths>
->>>>>>> 1bbbc8b (Se añade la logica del historial de transacciones asi como la tabla de este historial en la bbdd, falta arreglar tema de cancelar ofertas desde mercado y tema de ventas desde mi plantilla):fantasy-backend/pom.xml
                 </configuration>
             </plugin>
             <plugin>

@@ -75,6 +75,32 @@ public class UsuarioController {
 
     }
 
+    @PostMapping("/{username}/vender-jugador-liga/{jugadorLigaId}")
+    public ResponseEntity<Map<String, Object>> venderJugadorDeLiga(
+            @PathVariable String username,
+            @PathVariable Long jugadorLigaId) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            boolean exito = usuarioService.venderJugadorDeLiga(username, jugadorLigaId);
+
+            if (exito) {
+                response.put("mensaje", "Jugador vendido correctamente.");
+                response.put("status", "success");
+                return ResponseEntity.ok(response); // <-- ESTO ahora se serializa como JSON ✔️
+            } else {
+                response.put("mensaje", "❌ No se pudo vender el jugador.");
+                response.put("status", "error");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
+        } catch (Exception e) {
+            response.put("mensaje", "❌ Error: " + e.getMessage());
+            response.put("status", "error");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+    }
+
     @GetMapping("/by-username/{username}")
     public ResponseEntity<?> obtenerUsuario(@PathVariable String username) {
 

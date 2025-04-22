@@ -1,6 +1,7 @@
 package com.spfantasy.backend.controller;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,10 +37,15 @@ public class LigaController {
     @PostMapping("/crear")
     public ResponseEntity<?> crearLiga(@RequestBody CrearLigaDTO dto) {
         try {
-            Liga liga = ligaService.crearLiga(dto.getNombre(), dto.getCodigo(), dto.getCreadorId());
-            return ResponseEntity.ok(liga);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Liga liga = ligaService.crearLiga(dto.getNombre(), dto.getCodigoInvitacion(), dto.getCreadorId());
+
+            // 🔥 Devuelve un DTO que contiene la liga y un mensaje (como al unirse)
+            LigaUnidaDTO respuesta = new LigaUnidaDTO(liga.getId(), liga.getNombre(),
+                    "Liga creada y unido correctamente");
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
         }
     }
 
@@ -96,10 +102,11 @@ public class LigaController {
     }
 
     @GetMapping("/usuario/{usuarioId}/liga")
-    public ResponseEntity<?> obtenerLigaDelUsuario(@PathVariable Long usuarioId) {
+    public ResponseEntity<LigaDTO> obtenerLigaDelUsuario(@PathVariable Long usuarioId) {
         Optional<Liga> ligaOpt = ligaService.obtenerLigaDelUsuario(usuarioId);
-        return ligaOpt.map(liga -> ResponseEntity.ok(new LigaDTO(liga)))
-                .orElse(ResponseEntity.notFound().build());
+        return ligaOpt
+                .map(liga -> ResponseEntity.ok(new LigaDTO(liga)))
+                .orElse(ResponseEntity.noContent().build()); // 204 si no tiene liga
     }
 
 }

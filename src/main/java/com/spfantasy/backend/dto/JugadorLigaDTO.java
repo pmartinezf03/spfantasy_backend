@@ -5,6 +5,8 @@ import com.spfantasy.backend.model.JugadorLiga;
 public class JugadorLigaDTO {
 
     private Long id;
+    private Long idLiga; // ✅ Añade este campo
+
     private String nombre;
     private String posicion;
     private String fotoUrl;
@@ -17,9 +19,12 @@ public class JugadorLigaDTO {
     private Double fp;
     private String propietarioUsername;
     private Long propietarioId;
+    private Double rendimiento;
+    private Integer puntosTotales;
 
     public JugadorLigaDTO(JugadorLiga jugador) {
         this.id = jugador.getId();
+        this.idLiga = jugador.getId();
         this.nombre = jugador.getJugadorBase().getNombre();
         this.posicion = jugador.getJugadorBase().getPosicion();
         this.fotoUrl = jugador.getFotoUrl();
@@ -35,6 +40,11 @@ public class JugadorLigaDTO {
             this.propietarioUsername = jugador.getPropietario().getUsername();
             this.propietarioId = jugador.getPropietario().getId();
         }
+        this.rendimiento = jugador.getJugadorBase().getRendimiento() != null
+                ? jugador.getJugadorBase().getRendimiento().doubleValue()
+                : 0.0;
+        this.puntosTotales = jugador.getJugadorBase().getPuntosTotales();
+
     }
 
     // 🔽 Getters y Setters igual que antes, no hace falta repetir aquí
@@ -71,6 +81,14 @@ public class JugadorLigaDTO {
 
     public void setFotoUrl(String fotoUrl) {
         this.fotoUrl = fotoUrl;
+    }
+
+    public Long getIdLiga() {
+        return idLiga;
+    }
+
+    public void setIdLiga(Long idLiga) {
+        this.idLiga = idLiga;
     }
 
     public Double getPrecioVenta() {

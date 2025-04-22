@@ -1,8 +1,10 @@
 package com.spfantasy.backend.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.spfantasy.backend.model.Oferta.EstadoOferta;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,37 +91,83 @@ public class OfertaService {
         Usuario vendedor = oferta.getVendedor();
         JugadorLiga jugador = oferta.getJugador();
 
-        // Liberar dinero pendiente y restarlo de dinero real
-        comprador.setDineroPendiente(comprador.getDineroPendiente().subtract(oferta.getMontoOferta()));
-        comprador.setDinero(comprador.getDinero().subtract(oferta.getMontoOferta()));
+        BigDecimal monto = oferta.getMontoOferta();
 
-        vendedor.setDinero(vendedor.getDinero().add(oferta.getMontoOferta()));
+        // El dinero ya fue bloqueado, solo liberamos el pendiente
+        comprador.setDineroPendiente(comprador.getDineroPendiente().subtract(monto));
 
-        // Transferencia del jugador
+        // Realizamos la transferencia al vendedor
+        vendedor.setDinero(vendedor.getDinero().add(monto));
+
         jugador.setPropietario(comprador);
         jugador.setDisponible(false);
-
-        // 🆕 Establecer fecha de adquisición
-        jugador.setFechaAdquisicion(oferta.getTimestamp());
-
-        // ✅ Actualizar estado de la oferta
+        jugador.setFechaAdquisicion(LocalDateTime.now());
         oferta.setEstado(Oferta.EstadoOferta.ACEPTADA);
+        oferta.setTimestamp(LocalDateTime.now());
 
         usuarioRepository.save(comprador);
         usuarioRepository.save(vendedor);
         jugadorLigaRepository.save(jugador);
         ofertaRepository.save(oferta);
-        // 💾 Registrar transacción para comprador y vendedor
+
+        // Registrar transacción
         Transaccion transaccion = new Transaccion();
         transaccion.setJugador(jugador);
         transaccion.setComprador(comprador);
         transaccion.setVendedor(vendedor);
-        transaccion.setPrecio(oferta.getMontoOferta().intValue());
-        transaccion.setFecha(oferta.getTimestamp());
+        transaccion.setPrecio(monto.intValue());
+        transaccion.setFecha(LocalDateTime.now());
         transaccion.setLiga(oferta.getLiga());
 
         transaccionRepository.save(transaccion);
+    }
 
+    @Transactional
+    public void aceptarContraoferta(Oferta oferta) {
+        Usuario nuevoComprador = oferta.getVendedor(); // El que acepta la contraoferta
+        Usuario antiguoPropietario = oferta.getComprador(); // El que había hecho la oferta original
+        JugadorLiga jugador = oferta.getJugador();
+
+        if (!jugador.getPropietario().getId().equals(antiguoPropietario.getId())) {
+            throw new RuntimeException("El jugador ya no pertenece al ofertante original.");
+        }
+
+        BigDecimal monto = oferta.getMontoOferta();
+
+        if (nuevoComprador.getDinero().compareTo(monto) < 0) {
+            throw new RuntimeException("Dinero insuficiente para aceptar la contraoferta.");
+        }
+
+        // 💰 Transferencia de dinero (no se toca dineroPendiente)
+        nuevoComprador.setDinero(nuevoComprador.getDinero().subtract(monto));
+        antiguoPropietario.setDinero(antiguoPropietario.getDinero().add(monto));
+
+        // ⚽ Transferencia del jugador
+        jugador.setPropietario(nuevoComprador);
+        jugador.setEsTitular(false);
+        jugador.setDisponible(false);
+        jugador.setFechaAdquisicion(LocalDateTime.now());
+
+        // 📦 Actualizar estado de la oferta
+        oferta.setEstado(Oferta.EstadoOferta.ACEPTADA);
+        oferta.setTimestamp(LocalDateTime.now());
+
+        // 💾 Guardar cambios
+        usuarioRepository.save(nuevoComprador);
+        usuarioRepository.save(antiguoPropietario);
+        jugadorLigaRepository.save(jugador);
+        ofertaRepository.save(oferta);
+
+        // 🧾 Registrar transacción
+        Transaccion transaccion = new Transaccion();
+        transaccion.setJugador(jugador);
+        transaccion.setComprador(nuevoComprador);
+        transaccion.setVendedor(antiguoPropietario);
+        transaccion.setPrecio(monto.intValue());
+        transaccion.setFecha(LocalDateTime.now());
+        transaccion.setLiga(oferta.getLiga());
+
+        transaccionRepository.save(transaccion);
     }
 
     @Transactional

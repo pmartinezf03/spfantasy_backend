@@ -25,6 +25,7 @@ import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.JugadorRepository;
 import com.spfantasy.backend.repository.TransaccionRepository;
+import com.spfantasy.backend.repository.UsuarioLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
@@ -50,7 +51,15 @@ public class UsuarioService implements UserDetailsService {
   @Autowired
   private TransaccionService transaccionService;
 
+  @Autowired
+  private UsuarioLigaRepository usuarioLigaRepository;
+
+  @Autowired
   private TransaccionRepository transaccionRepository;
+
+  public boolean usuarioPerteneceALiga(Long usuarioId, Long ligaId) {
+    return usuarioLigaRepository.existsByUsuarioIdAndLigaId(usuarioId, ligaId);
+  }
 
   public Usuario registrarUsuario(Usuario usuario) {
     usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
@@ -203,9 +212,10 @@ public class UsuarioService implements UserDetailsService {
     Usuario usuario = usuarioRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
+    // ⚠️ Devuelve un UserDetails con contraseña vacía (solo para pruebas)
     return new org.springframework.security.core.userdetails.User(
         usuario.getUsername(),
-        usuario.getPassword(),
+        "", // <- contraseña vacía
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRole().name())));
   }
 
@@ -289,6 +299,42 @@ public class UsuarioService implements UserDetailsService {
   public Usuario buscarPorAlias(String alias) {
     return usuarioRepository.findByAlias(alias)
         .orElseThrow(() -> new RuntimeException("Alias no encontrado"));
+  }
+
+  @Transactional
+  public boolean venderJugadorDeLiga(String username, Long jugadorLigaId) {
+    Usuario usuario = usuarioRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+    JugadorLiga jugador = jugadorLigaRepository.findById(jugadorLigaId)
+        .orElseThrow(() -> new RuntimeException("JugadorLiga no encontrado"));
+
+    if (jugador.getPropietario() == null || !jugador.getPropietario().getId().equals(usuario.getId())) {
+      throw new RuntimeException("Este jugador no te pertenece.");
+    }
+
+    // Liberar jugador
+    jugador.setPropietario(null);
+    jugador.setDisponible(true);
+    jugador.setEsTitular(false);
+
+    usuario.setDinero(usuario.getDinero().add(jugador.getPrecioVenta()));
+
+    usuarioRepository.save(usuario);
+    jugadorLigaRepository.save(jugador);
+
+    // Registrar transacción
+    Transaccion transaccion = new Transaccion();
+    transaccion.setJugador(jugador);
+    transaccion.setVendedor(usuario);
+    transaccion.setComprador(null); // Venta al mercado
+    transaccion.setPrecio(jugador.getPrecioVenta().intValue());
+    transaccion.setLiga(jugador.getLiga());
+    transaccion.setFecha(LocalDateTime.now());
+
+    transaccionRepository.save(transaccion);
+
+    return true;
   }
 
 }

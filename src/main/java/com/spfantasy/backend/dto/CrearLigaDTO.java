@@ -3,7 +3,7 @@ package com.spfantasy.backend.dto;
 public class CrearLigaDTO {
 
     private String nombre;
-    private String codigo;
+    private String codigoInvitacion;
     private Long creadorId;
 
     public String getNombre() {
@@ -14,19 +14,19 @@ public class CrearLigaDTO {
         this.nombre = nombre;
     }
 
-    public String getCodigo() {
-        return codigo;
-    }
-
-    public void setCodigo(String codigo) {
-        this.codigo = codigo;
-    }
-
     public Long getCreadorId() {
         return creadorId;
     }
 
     public void setCreadorId(Long creadorId) {
         this.creadorId = creadorId;
+    }
+
+    public String getCodigoInvitacion() {
+        return codigoInvitacion;
+    }
+
+    public void setCodigoInvitacion(String codigoInvitacion) {
+        this.codigoInvitacion = codigoInvitacion;
     }
 }
