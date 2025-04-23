@@ -231,10 +231,17 @@ public class LigaService {
         List<UsuarioLiga> relaciones = usuarioLigaRepository.findByLigaId(ligaId);
 
         return relaciones.stream()
-                .map(ul -> new RankingUsuarioDTO(
-                        ul.getUsuario().getId(),
-                        ul.getUsuario().getUsername(),
-                        ul.getUsuario().getPuntos()))
+                .map(ul -> {
+                    Usuario usuario = ul.getUsuario();
+                    List<JugadorLiga> plantilla = jugadorLigaRepository.findByLiga_IdAndPropietario_Id(ligaId,
+                            usuario.getId());
+
+                    int puntosTotales = plantilla.stream()
+                            .mapToInt(JugadorLiga::getFp)
+                            .sum();
+
+                    return new RankingUsuarioDTO(usuario.getId(), usuario.getUsername(), puntosTotales);
+                })
                 .sorted((u1, u2) -> Integer.compare(u2.getPuntosTotales(), u1.getPuntosTotales()))
                 .collect(Collectors.toList());
     }

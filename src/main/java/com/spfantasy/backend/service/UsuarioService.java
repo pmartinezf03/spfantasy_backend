@@ -293,7 +293,12 @@ public class UsuarioService implements UserDetailsService {
   }
 
   public Usuario obtenerUsuarioPorId(Long id) {
-    return usuarioRepository.findById(id).orElse(null);
+    Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+    System.out.println("🧾 [UsuarioService] Dinero actual: " + usuario.getDinero());
+    System.out.println("🧾 [UsuarioService] Dinero pendiente: " + usuario.getDineroPendiente());
+
+    return usuario;
   }
 
   public Usuario buscarPorAlias(String alias) {

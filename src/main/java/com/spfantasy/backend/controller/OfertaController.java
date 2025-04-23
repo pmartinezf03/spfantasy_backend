@@ -31,6 +31,8 @@ import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.service.OfertaService;
 import com.spfantasy.backend.service.UsuarioService;
 
+import main.java.com.spfantasy.backend.dto.ContraofertaDTO;
+
 @RestController
 @RequestMapping("/api/ofertas")
 public class OfertaController {
@@ -151,32 +153,6 @@ public class OfertaController {
     return ResponseEntity.ok(Map.of("message", "Oferta rechazada y eliminada."));
   }
 
-  @PostMapping("/contraoferta/{id}")
-  public ResponseEntity<Map<String, String>> hacerContraoferta(
-      @PathVariable Long id,
-      @RequestBody Oferta nuevaOferta) {
-
-    Oferta ofertaExistente = ofertaService.obtenerOfertaPorId(id)
-        .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
-
-    // 🔁 Intercambiamos roles
-    nuevaOferta.setEstado(Oferta.EstadoOferta.CONTRAOFERTA);
-    nuevaOferta.setVendedor(ofertaExistente.getComprador()); // ahora es el vendedor
-    nuevaOferta.setComprador(ofertaExistente.getVendedor()); // ahora es el nuevo comprador
-    nuevaOferta.setJugador(ofertaExistente.getJugador());
-    nuevaOferta.setLiga(ofertaExistente.getLiga());
-
-    Oferta contra = ofertaService.crearOferta(nuevaOferta);
-
-    // ✅ Eliminamos la oferta original
-    ofertaService.eliminarOferta(ofertaExistente.getId());
-
-    // 🔔 Notificar al nuevo vendedor (antes comprador)
-    messagingTemplate.convertAndSend("/chat/ofertas/" + contra.getVendedor().getId(), new OfertaDTO(contra));
-
-    return ResponseEntity.ok(Map.of("message", "Contraoferta enviada correctamente."));
-  }
-
   @DeleteMapping("/{id}/retirar")
   public ResponseEntity<Map<String, String>> retirarOferta(@PathVariable Long id) {
     Optional<Oferta> ofertaOpt = ofertaService.obtenerOfertaPorId(id);
@@ -221,4 +197,18 @@ public class OfertaController {
 
     return ResponseEntity.ok(ofertaOpt.map(OfertaDTO::new).orElse(null));
   }
+
+  @PostMapping("/contraoferta")
+  public ResponseEntity<OfertaDTO> crearContraoferta(@RequestBody ContraofertaDTO dto) {
+    Oferta ofertaOriginal = ofertaService.obtenerOfertaPorId(dto.getOfertaOriginalId())
+        .orElseThrow(() -> new RuntimeException("❌ Oferta original no encontrada"));
+
+    Oferta nuevaContraoferta = ofertaService.crearContraofertaDesdeOriginal(ofertaOriginal, dto.getMontoOferta());
+
+    messagingTemplate.convertAndSend("/chat/ofertas/" + nuevaContraoferta.getVendedor().getId(),
+        new OfertaDTO(nuevaContraoferta));
+
+    return ResponseEntity.ok(new OfertaDTO(nuevaContraoferta));
+  }
+
 }

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.spfantasy.backend.dto.HistorialTransaccionDTO;
+import com.spfantasy.backend.dto.JugadorLigaDTO;
 import com.spfantasy.backend.model.Jugador;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Liga;
@@ -22,6 +23,9 @@ import com.spfantasy.backend.repository.JugadorRepository;
 import com.spfantasy.backend.repository.OfertaRepository;
 
 import jakarta.transaction.Transactional;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 @Service
 public class JugadorLigaService {
@@ -172,6 +176,16 @@ public class JugadorLigaService {
                 null,
                 null,
                 null);
+    }
+
+    private JugadorLigaDTO convertirADTO(JugadorLiga jugadorLiga) {
+        return new JugadorLigaDTO(jugadorLiga);
+    }
+
+    public List<JugadorLigaDTO> obtenerJugadoresDestacados(Long ligaId) {
+        Pageable topCinco = PageRequest.of(0, 5);
+        List<JugadorLiga> top = jugadorLigaRepository.findTopByLiga_IdOrderByFpDesc(ligaId, topCinco);
+        return top.stream().map(this::convertirADTO).toList();
     }
 
 }

@@ -39,6 +39,10 @@ public class OfertaService {
 
     @Transactional
     public Oferta crearOferta(Oferta oferta) {
+        if (oferta.getEstado() != EstadoOferta.PENDIENTE) {
+            throw new RuntimeException("Este método solo se usa para ofertas normales (PENDIENTES).");
+        }
+
         Usuario comprador = usuarioRepository.findById(oferta.getComprador().getId())
                 .orElseThrow(() -> new RuntimeException("Comprador no encontrado"));
 
@@ -48,7 +52,6 @@ public class OfertaService {
             throw new RuntimeException("No tienes suficiente dinero disponible para esta oferta.");
         }
 
-        // No se descuenta, solo se reserva
         comprador.setDineroPendiente(comprador.getDineroPendiente().add(oferta.getMontoOferta()));
         usuarioRepository.save(comprador);
 
@@ -124,8 +127,8 @@ public class OfertaService {
 
     @Transactional
     public void aceptarContraoferta(Oferta oferta) {
-        Usuario nuevoComprador = oferta.getVendedor(); // El que acepta la contraoferta
-        Usuario antiguoPropietario = oferta.getComprador(); // El que había hecho la oferta original
+        Usuario nuevoComprador = oferta.getVendedor(); // Quien acepta la contraoferta
+        Usuario antiguoPropietario = oferta.getComprador(); // Quien envió la contraoferta
         JugadorLiga jugador = oferta.getJugador();
 
         if (!jugador.getPropietario().getId().equals(antiguoPropietario.getId())) {
@@ -138,27 +141,29 @@ public class OfertaService {
             throw new RuntimeException("Dinero insuficiente para aceptar la contraoferta.");
         }
 
-        // 💰 Transferencia de dinero (no se toca dineroPendiente)
+        // Descontar solo dinero real
         nuevoComprador.setDinero(nuevoComprador.getDinero().subtract(monto));
+
+        // Limpiar cualquier error de dinero pendiente
+        if (nuevoComprador.getDineroPendiente().compareTo(monto) >= 0) {
+            nuevoComprador.setDineroPendiente(nuevoComprador.getDineroPendiente().subtract(monto));
+        }
+
         antiguoPropietario.setDinero(antiguoPropietario.getDinero().add(monto));
 
-        // ⚽ Transferencia del jugador
         jugador.setPropietario(nuevoComprador);
         jugador.setEsTitular(false);
         jugador.setDisponible(false);
         jugador.setFechaAdquisicion(LocalDateTime.now());
 
-        // 📦 Actualizar estado de la oferta
         oferta.setEstado(Oferta.EstadoOferta.ACEPTADA);
         oferta.setTimestamp(LocalDateTime.now());
 
-        // 💾 Guardar cambios
         usuarioRepository.save(nuevoComprador);
         usuarioRepository.save(antiguoPropietario);
         jugadorLigaRepository.save(jugador);
         ofertaRepository.save(oferta);
 
-        // 🧾 Registrar transacción
         Transaccion transaccion = new Transaccion();
         transaccion.setJugador(jugador);
         transaccion.setComprador(nuevoComprador);
@@ -176,14 +181,29 @@ public class OfertaService {
     }
 
     @Transactional
-    public Oferta hacerContraoferta(Long ofertaId, BigDecimal nuevoMonto) {
-        Oferta oferta = ofertaRepository.findById(ofertaId)
-                .orElseThrow(() -> new RuntimeException("Oferta no encontrada"));
+    public Oferta crearContraofertaDesdeOriginal(Oferta ofertaOriginal, BigDecimal nuevoMonto) {
+        if (ofertaOriginal.getEstado() == EstadoOferta.PENDIENTE) {
+            ofertaOriginal.setEstado(EstadoOferta.RECHAZADA);
+            ofertaRepository.save(ofertaOriginal);
 
-        oferta.setMontoOferta(nuevoMonto);
-        oferta.setEstado(Oferta.EstadoOferta.CONTRAOFERTA);
+            Usuario compradorOriginal = ofertaOriginal.getComprador();
+            if (compradorOriginal.getDineroPendiente().compareTo(ofertaOriginal.getMontoOferta()) >= 0) {
+                compradorOriginal.setDineroPendiente(
+                        compradorOriginal.getDineroPendiente().subtract(ofertaOriginal.getMontoOferta()));
+                usuarioRepository.saveAndFlush(compradorOriginal);
+            }
+        }
 
-        return ofertaRepository.save(oferta);
+        Oferta contraoferta = new Oferta();
+        contraoferta.setComprador(ofertaOriginal.getVendedor());
+        contraoferta.setVendedor(ofertaOriginal.getComprador());
+        contraoferta.setJugador(ofertaOriginal.getJugador());
+        contraoferta.setLiga(ofertaOriginal.getLiga());
+        contraoferta.setMontoOferta(nuevoMonto);
+        contraoferta.setEstado(EstadoOferta.CONTRAOFERTA);
+        contraoferta.setLeidaPorVendedor(false);
+
+        return ofertaRepository.save(contraoferta);
     }
 
     public boolean tieneOfertasNuevas(Long vendedorId) {
@@ -191,7 +211,13 @@ public class OfertaService {
     }
 
     public List<Oferta> obtenerOfertasPorVendedorYLiga(Long vendedorId, Long ligaId) {
-        return ofertaRepository.findByVendedor_IdAndLiga_Id(vendedorId, ligaId);
+        List<Oferta> todas = ofertaRepository.findByVendedor_IdAndLiga_Id(vendedorId, ligaId);
+        System.out.println("📤 Ofertas crudas del vendedor " + vendedorId + ":");
+        todas.forEach(o -> System.out.println("  ID: " + o.getId() + " | Estado: " + o.getEstado()));
+
+        return todas.stream()
+                .filter(o -> o.getEstado() == EstadoOferta.PENDIENTE || o.getEstado() == EstadoOferta.CONTRAOFERTA)
+                .toList(); // ✅ excluir explícitamente las RECHAZADAS y ACEPTADAS
     }
 
     public List<Oferta> obtenerOfertasPorCompradorYLiga(Long compradorId, Long ligaId) {

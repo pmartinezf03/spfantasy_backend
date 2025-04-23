@@ -55,6 +55,22 @@ public class JugadorLigaDTO {
         return id;
     }
 
+    public Double getRendimiento() {
+        return rendimiento;
+    }
+
+    public void setRendimiento(Double rendimiento) {
+        this.rendimiento = rendimiento;
+    }
+
+    public Integer getPuntosTotales() {
+        return puntosTotales;
+    }
+
+    public void setPuntosTotales(Integer puntosTotales) {
+        this.puntosTotales = puntosTotales;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }

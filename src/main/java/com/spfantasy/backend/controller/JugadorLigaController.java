@@ -51,4 +51,10 @@ public class JugadorLigaController {
         return ResponseEntity.ok(jugadoresDTO);
     }
 
+    @GetMapping("/destacados")
+    public ResponseEntity<List<JugadorLigaDTO>> obtenerJugadoresDestacados(@RequestParam Long ligaId) {
+        List<JugadorLigaDTO> destacados = jugadorLigaService.obtenerJugadoresDestacados(ligaId);
+        return ResponseEntity.ok(destacados);
+    }
+
 }
