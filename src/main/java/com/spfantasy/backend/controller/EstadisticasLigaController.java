@@ -1,4 +1,4 @@
-package com.spfantasy.backend.service;
+package com.spfantasy.backend.controller;
 
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.dto.JugadorLigaDTO;

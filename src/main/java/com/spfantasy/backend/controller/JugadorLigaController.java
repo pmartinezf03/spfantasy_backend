@@ -22,7 +22,7 @@ public class JugadorLigaController {
 
     @GetMapping("/mercado")
     public ResponseEntity<List<JugadorLigaDTO>> obtenerJugadoresDeTodaLaLiga(@RequestParam Long ligaId) {
-        List<JugadorLiga> jugadores = jugadorLigaService.obtenerTodosEnLiga(ligaId); // 🔁 Cambia el método
+        List<JugadorLiga> jugadores = jugadorLigaService.obtenerTodosEnLiga(ligaId);
         List<JugadorLigaDTO> dtoList = jugadores.stream()
                 .map(JugadorLigaDTO::new)
                 .toList();
@@ -55,6 +55,12 @@ public class JugadorLigaController {
     public ResponseEntity<List<JugadorLigaDTO>> obtenerJugadoresDestacados(@RequestParam Long ligaId) {
         List<JugadorLigaDTO> destacados = jugadorLigaService.obtenerJugadoresDestacados(ligaId);
         return ResponseEntity.ok(destacados);
+    }
+
+    @GetMapping("/admin/actualizar-estadisticas-liga")
+    public ResponseEntity<String> actualizarEstadisticasDesdeJugadoresBase() {
+        jugadorLigaService.actualizarTodosLosJugadoresLigaDesdeTodosLosJugadorBase();
+        return ResponseEntity.ok("✅ Estadísticas de JugadoresLiga actualizadas desde Jugador base.");
     }
 
 }

@@ -26,6 +26,8 @@ import com.spfantasy.backend.repository.UsuarioLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
+import com.spfantasy.backend.model.ActividadLiga;
+import com.spfantasy.backend.repository.ActividadLigaRepository;
 
 @Service
 public class LigaService {
@@ -47,6 +49,13 @@ public class LigaService {
 
     @Autowired
     private GrupoChatRepository grupoChatRepository;
+
+    @Autowired
+    private ActividadLigaRepository actividadLigaRepository;
+
+    public List<ActividadLiga> obtenerActividadReciente(Long ligaId) {
+        return actividadLigaRepository.findTop10ByLigaIdOrderByTimestampDesc(ligaId);
+    }
 
     @Transactional
     public Liga crearLiga(String nombre, String codigoInvitacion, Long creadorId) {
@@ -275,6 +284,19 @@ public class LigaService {
                 .findFirst()
                 .map(UsuarioLiga::getLiga);
 
+    }
+
+    public void registrarActividad(Long ligaId, Long usuarioId, String tipo, String descripcion) {
+        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow();
+        Liga liga = ligaRepository.findById(ligaId).orElseThrow();
+
+        ActividadLiga actividad = new ActividadLiga();
+        actividad.setTipo(tipo);
+        actividad.setDescripcion(descripcion);
+        actividad.setLiga(liga);
+        actividad.setUsuario(usuario);
+
+        actividadLigaRepository.save(actividad);
     }
 
 }

@@ -52,6 +52,7 @@ public class JugadorLiga {
     private Integer t2;
     private Integer t3;
     private Integer fp;
+    private BigDecimal rendimiento;
 
     public void setId(Long id) {
         this.id = id;
@@ -179,6 +180,14 @@ public class JugadorLiga {
 
     public void setFotoUrl(String fotoUrl) {
         this.fotoUrl = fotoUrl;
+    }
+
+    public void setRendimiento(BigDecimal rendimiento) {
+        this.rendimiento = rendimiento;
+    }
+
+    public BigDecimal getRendimiento() {
+        return rendimiento;
     }
 
 }

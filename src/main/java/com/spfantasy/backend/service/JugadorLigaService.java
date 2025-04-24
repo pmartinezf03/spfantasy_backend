@@ -1,5 +1,7 @@
 package com.spfantasy.backend.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -186,6 +188,74 @@ public class JugadorLigaService {
         Pageable topCinco = PageRequest.of(0, 5);
         List<JugadorLiga> top = jugadorLigaRepository.findTopByLiga_IdOrderByFpDesc(ligaId, topCinco);
         return top.stream().map(this::convertirADTO).toList();
+    }
+
+    public void recalcularEstadisticasJugadorLiga(JugadorLiga j) {
+        double puntos = calcularPuntosTotales(j);
+        double rendimiento = calcularRendimiento(j);
+        BigDecimal precio = calcularPrecioVenta(puntos, rendimiento);
+
+        j.setPuntosTotales((int) Math.round(puntos));
+        j.setRendimiento(BigDecimal.valueOf(rendimiento));
+        j.setPrecioVenta(precio);
+    }
+
+    public void actualizarJugadoresLigaDesdeJugadorBase(Jugador jugadorBase) {
+        List<JugadorLiga> jugadoresLiga = jugadorLigaRepository.findByJugadorBase_Id(jugadorBase.getId());
+
+        for (JugadorLiga j : jugadoresLiga) {
+            j.setPts(jugadorBase.getPts());
+            j.setMin(jugadorBase.getMin());
+            j.setTl(jugadorBase.getTl());
+            j.setT2(jugadorBase.getT2());
+            j.setT3(jugadorBase.getT3());
+            j.setFp(jugadorBase.getFp());
+            j.setPuntosTotales(jugadorBase.getPuntosTotales());
+            j.setRendimiento(jugadorBase.getRendimiento());
+            j.setPrecioVenta(jugadorBase.getPrecioVenta());
+        }
+
+        jugadorLigaRepository.saveAll(jugadoresLiga);
+    }
+
+    public void actualizarTodosLosJugadoresLigaDesdeTodosLosJugadorBase() {
+        List<Jugador> jugadoresBase = jugadorRepository.findAll();
+
+        for (Jugador jugador : jugadoresBase) {
+            actualizarJugadoresLigaDesdeJugadorBase(jugador);
+        }
+    }
+
+    private int calcularPuntosTotales(JugadorLiga jugador) {
+        int pts = jugador.getPts() != null ? jugador.getPts() : 0;
+        int t3 = jugador.getT3() != null ? jugador.getT3() : 0;
+        int t2 = jugador.getT2() != null ? jugador.getT2() : 0;
+        int tl = jugador.getTl() != null ? jugador.getTl() : 0;
+        int fp = jugador.getFp() != null ? jugador.getFp() : 0;
+        return (int) Math.round(pts * 1.2 + t3 * 3 + t2 * 2 + tl + fp * 1.5);
+    }
+
+    private double calcularRendimiento(JugadorLiga jugador) {
+        int pts = jugador.getPts() != null ? jugador.getPts() : 0;
+        int min = jugador.getMin() != null ? jugador.getMin() : 0;
+        int tl = jugador.getTl() != null ? jugador.getTl() : 0;
+        int t2 = jugador.getT2() != null ? jugador.getT2() : 0;
+        int t3 = jugador.getT3() != null ? jugador.getT3() : 0;
+        int fp = jugador.getFp() != null ? jugador.getFp() : 0;
+
+        double rendimiento = 0.0;
+        rendimiento += pts * 0.4;
+        rendimiento += fp * 0.2;
+        rendimiento += min * 0.15;
+        rendimiento += (t2 + t3 + tl) * 0.25;
+        return Math.min(rendimiento / 10.0, 10.0);
+    }
+
+    private BigDecimal calcularPrecioVenta(double rendimiento, double multiplicador) {
+        BigDecimal precio = BigDecimal.valueOf(0.5 + rendimiento / 10 * 9.5)
+                .multiply(BigDecimal.valueOf(1_000_000))
+                .multiply(BigDecimal.valueOf(multiplicador));
+        return precio.setScale(2, RoundingMode.HALF_UP);
     }
 
 }

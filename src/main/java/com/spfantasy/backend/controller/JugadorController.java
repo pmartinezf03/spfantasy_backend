@@ -21,12 +21,17 @@ import com.spfantasy.backend.repository.JugadorRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import com.spfantasy.backend.service.JugadorService;
 
+import com.spfantasy.backend.service.JugadorStatsFetcherService;
+
 @RestController
-@RequestMapping("/jugadores")
+@RequestMapping("/api/jugadores") // ← ESTE CAMBIO ES CLAVE
 public class JugadorController {
 
     @Autowired
     private JugadorService jugadorService;
+
+    @Autowired
+    private JugadorStatsFetcherService statsFetcherService;
 
     @Autowired
     private JugadorRepository jugadorRepository; // ✅ Agregamos el repositorio de jugadores
@@ -93,4 +98,16 @@ public class JugadorController {
     public ResponseEntity<List<JugadorDTO>> obtenerEstadisticas() {
         return ResponseEntity.ok(jugadorService.obtenerEstadisticasLiga());
     }
+
+    @PostMapping("/recalcular-estadisticas")
+    public ResponseEntity<String> recalcularEstadisticas() {
+        // 🧪 Generar nuevos datos simulados primero
+        statsFetcherService.actualizarDatosSimuladosParaTodosLosJugadores();
+
+        // 🔁 Luego recalcular rendimiento y precio con esos datos
+        jugadorService.recalcularEstadisticasParaTodos();
+
+        return ResponseEntity.ok("✅ Estadísticas simuladas y recalculadas correctamente.");
+    }
+
 }

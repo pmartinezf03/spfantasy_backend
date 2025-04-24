@@ -26,6 +26,8 @@ import com.spfantasy.backend.dto.UnirseLigaDTO;
 import com.spfantasy.backend.model.Liga;
 import com.spfantasy.backend.service.LigaService;
 
+import com.spfantasy.backend.model.ActividadLiga;
+
 @RestController
 @RequestMapping("/api/ligas")
 
@@ -47,6 +49,12 @@ public class LigaController {
             ex.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
         }
+    }
+
+    @GetMapping("/{ligaId}/actividad")
+    public ResponseEntity<List<ActividadLiga>> obtenerActividad(@PathVariable Long ligaId) {
+        List<ActividadLiga> actividad = ligaService.obtenerActividadReciente(ligaId);
+        return ResponseEntity.ok(actividad);
     }
 
     @PostMapping("/unirse")
