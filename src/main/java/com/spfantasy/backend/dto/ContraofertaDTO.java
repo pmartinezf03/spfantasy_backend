@@ -1,4 +1,4 @@
-package main.java.com.spfantasy.backend.dto;
+package com.spfantasy.backend.dto;
 
 import java.math.BigDecimal;
 

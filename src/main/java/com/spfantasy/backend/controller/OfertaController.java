@@ -31,7 +31,7 @@ import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.service.OfertaService;
 import com.spfantasy.backend.service.UsuarioService;
 
-import main.java.com.spfantasy.backend.dto.ContraofertaDTO;
+import com.spfantasy.backend.dto.ContraofertaDTO;
 
 @RestController
 @RequestMapping("/api/ofertas")
