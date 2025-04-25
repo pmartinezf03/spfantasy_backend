@@ -5,7 +5,7 @@ COPY . .
 RUN ./mvnw clean package -DskipTests
 
 # Etapa 2: Run
-FROM eclipse-temurin:17
+FROM openjdk:17-jdk-slim
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
