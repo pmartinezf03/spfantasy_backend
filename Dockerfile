@@ -1,21 +1,12 @@
- 
-# Usa una imagen de Java
-FROM eclipse-temurin:17
-
-# Crea un directorio de trabajo
+# Etapa 1: Build
+FROM maven:3.8.6-openjdk-17 AS build
 WORKDIR /app
-
-# Copia todo el código fuente
 COPY . .
-
-# Da permisos de ejecución al wrapper de Maven
-RUN chmod +x mvnw
-
-# Compila el proyecto
 RUN ./mvnw clean package -DskipTests
 
-# Expón el puerto en el que corre tu app
+# Etapa 2: Run
+FROM eclipse-temurin:17
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Comando para iniciar Spring Boot
-CMD ["java", "-jar", "target/backend-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
