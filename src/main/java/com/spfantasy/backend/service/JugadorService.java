@@ -2,7 +2,9 @@ package com.spfantasy.backend.service;
 
 import com.spfantasy.backend.dto.JugadorDTO;
 import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.JugadorRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 
@@ -26,6 +28,9 @@ public class JugadorService {
 
     @Autowired
     private JugadorLigaService jugadorLigaService;
+
+    @Autowired
+    private JugadorLigaRepository jugadorLigaRepository;
 
     // ✅ Obtener jugadores disponibles en el mercado
     public List<JugadorDTO> obtenerJugadoresDisponibles() {
@@ -79,18 +84,18 @@ public class JugadorService {
         jugadorRepository.deleteById(id);
     }
 
-    public boolean venderJugador(String username, Jugador jugador) {
+    public boolean venderJugador(String username, JugadorLiga jugador) {
         Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
 
         if (usuarioOpt.isPresent()) {
             Usuario usuario = usuarioOpt.get();
 
-            Optional<Jugador> jugadorEnPlantilla = usuario.getPlantilla().stream()
+            Optional<JugadorLiga> jugadorEnPlantilla = usuario.getPlantilla().stream()
                     .filter(j -> j.getId().equals(jugador.getId()))
                     .findFirst();
 
             if (jugadorEnPlantilla.isPresent()) {
-                Jugador jugadorAEliminar = jugadorEnPlantilla.get();
+                JugadorLiga jugadorAEliminar = jugadorEnPlantilla.get(); // <- JugadorLiga es el tipo correcto
 
                 usuario.getPlantilla().remove(jugadorAEliminar);
                 usuario.setDinero(usuario.getDinero().add(jugadorAEliminar.getPrecioVenta()));
@@ -100,7 +105,7 @@ public class JugadorService {
                 // ✅ Marcar el jugador como disponible y SIN PROPIETARIO
                 jugadorAEliminar.setDisponible(true);
                 jugadorAEliminar.setPropietario(null); // ✅ Aquí se asegura que propietario sea NULL
-                jugadorRepository.save(jugadorAEliminar);
+                jugadorLigaRepository.save(jugadorAEliminar);
 
                 System.out.println("✅ Jugador vendido correctamente.");
                 return true;

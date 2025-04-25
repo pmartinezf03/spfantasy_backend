@@ -3,18 +3,12 @@ package com.spfantasy.backend.model;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "jugadores_liga")
 public class JugadorLiga {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -54,124 +48,78 @@ public class JugadorLiga {
     private Integer fp;
     private BigDecimal rendimiento;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setJugadorBase(Jugador jugadorBase) {
-        this.jugadorBase = jugadorBase;
-    }
-
-    public void setLiga(Liga liga) {
-        this.liga = liga;
-    }
-
-    public void setPropietario(Usuario propietario) {
-        this.propietario = propietario;
-    }
-
-    public void setDisponible(boolean disponible) {
-        this.disponible = disponible;
-    }
-
-    public void setEsTitular(boolean esTitular) {
-        this.esTitular = esTitular;
-    }
-
-    public void setPrecioVenta(BigDecimal precioVenta) {
-        this.precioVenta = precioVenta;
-    }
-
-    public void setPuntosTotales(Integer puntosTotales) {
-        this.puntosTotales = puntosTotales;
-    }
-
-    public void setPts(Integer pts) {
-        this.pts = pts;
-    }
-
-    public void setMin(Integer min) {
-        this.min = min;
-    }
-
-    public void setTl(Integer tl) {
-        this.tl = tl;
-    }
-
-    public void setT2(Integer t2) {
-        this.t2 = t2;
-    }
-
-    public void setT3(Integer t3) {
-        this.t3 = t3;
-    }
-
-    public void setFp(Integer fp) {
-        this.fp = fp;
-    }
-
-    public LocalDateTime getFechaAdquisicion() {
-        return fechaAdquisicion;
-    }
-
-    public void setFechaAdquisicion(LocalDateTime fechaAdquisicion) {
-        this.fechaAdquisicion = fechaAdquisicion;
-    }
+    // ====== Getters y Setters ======
 
     public Long getId() {
         return id;
+    }
+
+    public void setTitular(boolean titular) {
+        this.esTitular = titular;
+    }
+
+    public boolean isTitular() {
+        return esTitular;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Jugador getJugadorBase() {
         return jugadorBase;
     }
 
+    public void setJugadorBase(Jugador jugadorBase) {
+        this.jugadorBase = jugadorBase;
+    }
+
     public Liga getLiga() {
         return liga;
+    }
+
+    public void setLiga(Liga liga) {
+        this.liga = liga;
     }
 
     public Usuario getPropietario() {
         return propietario;
     }
 
+    public void setPropietario(Usuario propietario) {
+        this.propietario = propietario;
+    }
+
     public boolean isDisponible() {
         return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
     }
 
     public boolean isEsTitular() {
         return esTitular;
     }
 
+    public void setEsTitular(boolean esTitular) {
+        this.esTitular = esTitular;
+    }
+
     public BigDecimal getPrecioVenta() {
         return precioVenta;
+    }
+
+    public void setPrecioVenta(BigDecimal precioVenta) {
+        this.precioVenta = precioVenta;
     }
 
     public Integer getPuntosTotales() {
         return puntosTotales;
     }
 
-    public Integer getPts() {
-        return pts;
-    }
-
-    public Integer getMin() {
-        return min;
-    }
-
-    public Integer getTl() {
-        return tl;
-    }
-
-    public Integer getT2() {
-        return t2;
-    }
-
-    public Integer getT3() {
-        return t3;
-    }
-
-    public Integer getFp() {
-        return fp;
+    public void setPuntosTotales(Integer puntosTotales) {
+        this.puntosTotales = puntosTotales;
     }
 
     public String getFotoUrl() {
@@ -182,12 +130,85 @@ public class JugadorLiga {
         this.fotoUrl = fotoUrl;
     }
 
-    public void setRendimiento(BigDecimal rendimiento) {
-        this.rendimiento = rendimiento;
+    public LocalDateTime getFechaAdquisicion() {
+        return fechaAdquisicion;
+    }
+
+    public void setFechaAdquisicion(LocalDateTime fechaAdquisicion) {
+        this.fechaAdquisicion = fechaAdquisicion;
+    }
+
+    public Integer getPts() {
+        return pts;
+    }
+
+    public void setPts(Integer pts) {
+        this.pts = pts;
+    }
+
+    public Integer getMin() {
+        return min;
+    }
+
+    public void setMin(Integer min) {
+        this.min = min;
+    }
+
+    public Integer getTl() {
+        return tl;
+    }
+
+    public void setTl(Integer tl) {
+        this.tl = tl;
+    }
+
+    public Integer getT2() {
+        return t2;
+    }
+
+    public void setT2(Integer t2) {
+        this.t2 = t2;
+    }
+
+    public Integer getT3() {
+        return t3;
+    }
+
+    public void setT3(Integer t3) {
+        this.t3 = t3;
+    }
+
+    public Integer getFp() {
+        return fp;
+    }
+
+    public void setFp(Integer fp) {
+        this.fp = fp;
     }
 
     public BigDecimal getRendimiento() {
         return rendimiento;
     }
 
+    public void setRendimiento(BigDecimal rendimiento) {
+        this.rendimiento = rendimiento;
+    }
+
+    // ====== GETTERS DELEGADOS DESDE jugadorBase ======
+
+    public String getNombre() {
+        return jugadorBase != null ? jugadorBase.getNombre() : null;
+    }
+
+    public String getPosicion() {
+        return jugadorBase != null ? jugadorBase.getPosicion() : null;
+    }
+
+    public String getEquipo() {
+        return jugadorBase != null && jugadorBase.getEquipo() != null ? jugadorBase.getEquipo().getNombre() : null;
+    }
+
+    public Long getJugadorBaseId() {
+        return jugadorBase != null ? jugadorBase.getId() : null;
+    }
 }

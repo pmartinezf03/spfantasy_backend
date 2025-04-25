@@ -27,14 +27,10 @@ public class Jugador {
 
     @ManyToOne
     @JoinColumn(name = "equipo_id", nullable = false)
-    private Equipo equipo;  
+    private Equipo equipo;
 
     @Column(name = "foto_url", length = 255)
-    private String fotoUrl;  
-
-    @ManyToMany(mappedBy = "plantilla")
-    @JsonIgnore
-    private List<Usuario> usuarios;
+    private String fotoUrl;
 
     @Column(name = "disponible", nullable = false)
     private boolean disponible = true;
@@ -98,10 +94,6 @@ public class Jugador {
 
     public String getFotoUrl() {
         return fotoUrl;
-    }
-
-    public List<Usuario> getUsuarios() {
-        return usuarios;
     }
 
     public boolean getDisponible() {
@@ -172,10 +164,6 @@ public class Jugador {
         this.fotoUrl = fotoUrl;
     }
 
-    public void setUsuarios(List<Usuario> usuarios) {
-        this.usuarios = usuarios;
-    }
-
     public void setDisponible(boolean disponible) {
         this.disponible = disponible;
     }
@@ -211,5 +199,5 @@ public class Jugador {
     public void setFp(Integer fp) {
         this.fp = fp;
     }
-    
+
 }

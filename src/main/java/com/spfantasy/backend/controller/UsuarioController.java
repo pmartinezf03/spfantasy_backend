@@ -24,10 +24,14 @@ import com.spfantasy.backend.dto.JugadorDTO;
 import com.spfantasy.backend.dto.LoginResponseDTO;
 import com.spfantasy.backend.dto.UsuarioDTO;
 import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Role;
 import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import com.spfantasy.backend.service.UsuarioService;
+
+import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -44,6 +48,9 @@ public class UsuarioController {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JugadorLigaRepository jugadorLigaRepository;
 
     @PostMapping("/registro")
     public Usuario registrarUsuario(@RequestBody Usuario usuario) {
@@ -102,70 +109,69 @@ public class UsuarioController {
     }
 
     @GetMapping("/by-username/{username}")
-    public ResponseEntity<?> obtenerUsuario(@PathVariable String username) {
-
+    public ResponseEntity<UsuarioConPlantillaDTO> obtenerUsuario(@PathVariable String username) {
         Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
 
-        if (usuario != null) {
-            List<JugadorDTO> titulares = usuario.getPlantilla().stream()
-                    .filter(Jugador::getTitular)
-                    .map(jugador -> {
-                        JugadorDTO dto = new JugadorDTO(
-                                jugador.getId(),
-                                jugador.getNombre(),
-                                jugador.getPosicion(),
-                                jugador.getPrecioVenta().doubleValue(),
-                                jugador.getRendimiento().doubleValue(),
-                                jugador.getPuntosTotales(),
-                                jugador.getEquipo(),
-                                jugador.getFotoUrl(),
-                                jugador.getPts(),
-                                jugador.getMin(),
-                                jugador.getTl(),
-                                jugador.getT2(),
-                                jugador.getT3(),
-                                jugador.getFp(),
-                                jugador.getPropietario());
-                        dto.setEsTitular(true);
-                        return dto;
-                    }).toList();
-
-            List<JugadorDTO> suplentes = usuario.getPlantilla().stream()
-                    .filter(j -> !j.getTitular())
-                    .map(jugador -> {
-                        JugadorDTO dto = new JugadorDTO(
-                                jugador.getId(),
-                                jugador.getNombre(),
-                                jugador.getPosicion(),
-                                jugador.getPrecioVenta().doubleValue(),
-                                jugador.getRendimiento().doubleValue(),
-                                jugador.getPuntosTotales(),
-                                jugador.getEquipo(),
-                                jugador.getFotoUrl(),
-                                jugador.getPts(),
-                                jugador.getMin(),
-                                jugador.getTl(),
-                                jugador.getT2(),
-                                jugador.getT3(),
-                                jugador.getFp(),
-                                jugador.getPropietario());
-                        dto.setEsTitular(false);
-                        return dto;
-                    }).toList();
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("username", usuario.getUsername());
-            response.put("email", usuario.getEmail());
-            response.put("dinero", usuario.getDinero());
-            response.put("role", usuario.getRole());
-            response.put("titulares", titulares);
-            response.put("suplentes", suplentes);
-
-            System.out.println("📤 Enviando plantilla guardada del usuario al frontend: " + response);
-            return ResponseEntity.ok(response);
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
         }
 
-        return ResponseEntity.notFound().build();
+        List<JugadorDTO> titulares = usuario.getPlantilla().stream()
+                .filter(JugadorLiga::isEsTitular)
+                .map(jugador -> new JugadorDTO(
+                        jugador.getId(),
+                        jugador.getJugadorBase().getNombre(),
+                        jugador.getJugadorBase().getPosicion(),
+                        jugador.getPrecioVenta().doubleValue(),
+                        jugador.getRendimiento().doubleValue(),
+                        jugador.getPuntosTotales(),
+                        jugador.getJugadorBase().getEquipo(), // <-- se espera Equipo, no String
+                        jugador.getFotoUrl(),
+                        jugador.getPts(),
+                        jugador.getMin(),
+                        jugador.getTl(),
+                        jugador.getT2(),
+                        jugador.getT3(),
+                        jugador.getFp(),
+                        jugador.getPropietario()))
+                .toList();
+
+        List<JugadorDTO> suplentes = usuario.getPlantilla().stream()
+                .filter(j -> !j.isEsTitular())
+                .map(jugador -> {
+                    JugadorDTO dto = new JugadorDTO(
+                            jugador.getId(),
+                            jugador.getJugadorBase().getNombre(),
+                            jugador.getJugadorBase().getPosicion(),
+                            jugador.getPrecioVenta().doubleValue(),
+                            jugador.getRendimiento() != null ? jugador.getRendimiento().doubleValue() : 0.0,
+                            jugador.getPuntosTotales(),
+                            jugador.getJugadorBase().getEquipo(),
+                            jugador.getFotoUrl(),
+                            jugador.getPts(),
+                            jugador.getMin(),
+                            jugador.getTl(),
+                            jugador.getT2(),
+                            jugador.getT3(),
+                            jugador.getFp(),
+                            jugador.getPropietario());
+                    dto.setEsTitular(false);
+                    return dto;
+                })
+
+                .toList();
+
+        UsuarioConPlantillaDTO dto = new UsuarioConPlantillaDTO();
+        dto.setUsername(usuario.getUsername());
+        dto.setEmail(usuario.getEmail());
+        dto.setAlias(usuario.getAlias());
+        dto.setDinero(usuario.getDinero());
+        dto.setRole(usuario.getRole().toString());
+        dto.setTitulares(titulares);
+        dto.setSuplentes(suplentes);
+
+        System.out.println("📤 Enviando plantilla del usuario al frontend: " + dto);
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping
@@ -186,10 +192,10 @@ public class UsuarioController {
 
     @PostMapping("/{username}/comprar")
     public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username,
-            @RequestBody Jugador jugadorRequest) {
+            @RequestBody JugadorLiga jugadorRequest) {
         System.out.println("📩 Recibido ID del jugador para compra: " + jugadorRequest.getId());
 
-        Optional<Jugador> jugadorOpt = usuarioService.jugadorRepository.findById(jugadorRequest.getId());
+        Optional<JugadorLiga> jugadorOpt = jugadorLigaRepository.findById(jugadorRequest.getId());
         if (jugadorOpt.isEmpty()) {
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Jugador no encontrado.");
@@ -198,7 +204,7 @@ public class UsuarioController {
             return ResponseEntity.badRequest().body(response);
         }
 
-        Jugador jugador = jugadorOpt.get();
+        JugadorLiga jugador = jugadorOpt.get();
         System.out.println(
                 "🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
 
@@ -224,11 +230,17 @@ public class UsuarioController {
 
     @PostMapping("/{username}/vender")
     public ResponseEntity<Map<String, Object>> venderJugador(@PathVariable String username,
-            @RequestBody Jugador jugador) {
+            @RequestBody JugadorLiga jugador) {
+
         System.out.println("🎯 Recibiendo solicitud para vender el jugador: " + jugador.getNombre() + " (ID: "
                 + jugador.getId() + ")");
 
-        boolean exito = usuarioService.venderJugador(username, jugador);
+        // ✅ Convertir Jugador → JugadorLiga
+        JugadorLiga jugadorLiga = jugadorLigaRepository.findById(jugador.getId())
+                .orElseThrow(() -> new RuntimeException("JugadorLiga no encontrado"));
+
+        // ✅ Llamar al servicio con el tipo correcto
+        boolean exito = usuarioService.venderJugador(username, jugadorLiga);
         Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
 
         Map<String, Object> response = new HashMap<>();
@@ -317,6 +329,17 @@ public class UsuarioController {
             response.put("status", "error");
             return ResponseEntity.badRequest().body(response);
         }
+    }
+
+    @GetMapping("/{username}/puntos-semana")
+    public ResponseEntity<Map<Long, String>> obtenerPuntosSemanales(@PathVariable String username) {
+        Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Map<Long, String> puntos = usuarioService.obtenerPuntosSemanalesTitulares(usuario);
+        return ResponseEntity.ok(puntos);
     }
 
 }

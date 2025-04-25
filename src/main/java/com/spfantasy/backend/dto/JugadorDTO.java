@@ -3,9 +3,14 @@ package com.spfantasy.backend.dto;
 import com.spfantasy.backend.model.Equipo;
 import com.spfantasy.backend.model.Usuario;
 
+import com.spfantasy.backend.model.Equipo;
+import com.spfantasy.backend.model.Usuario;
+
 public class JugadorDTO {
 
-    private Long id;
+    private Long id; // Puedes usar este como id principal del DTO
+    private Long idLiga; // <-- ID de JugadorLiga, importante para guardar plantilla
+
     private String nombre;
     private String posicion;
     private Double precioVenta;
@@ -23,13 +28,18 @@ public class JugadorDTO {
     private Integer fp;
     private boolean esTitular;
 
-    // ✅ NUEVO: Datos del Propietario
+    // Datos del propietario
     private Long propietarioId;
     private String propietarioUsername;
 
-    public JugadorDTO(Long id, String nombre, String posicion, Double precioVenta, Double rendimiento, Integer puntosTotales, Equipo equipo, String fotoUrl,
-            Integer pts, Integer min, Integer tl, Integer t2, Integer t3, Integer fp, Usuario propietario) {
-        this.id = id;
+    public JugadorDTO(Long idLiga, String nombre, String posicion, Double precioVenta, Double rendimiento,
+            Integer puntosTotales,
+            Equipo equipo, String fotoUrl, Integer pts, Integer min, Integer tl, Integer t2,
+            Integer t3, Integer fp, Usuario propietario) {
+
+        this.idLiga = idLiga; // ID de JugadorLiga
+        this.id = idLiga; // También lo usamos como ID general del DTO
+
         this.nombre = nombre;
         this.posicion = posicion;
         this.precioVenta = precioVenta;
@@ -37,6 +47,7 @@ public class JugadorDTO {
         this.puntosTotales = puntosTotales;
         this.equipo = equipo;
         this.fotoUrl = fotoUrl;
+
         this.pts = pts;
         this.min = min;
         this.tl = tl;
@@ -44,7 +55,7 @@ public class JugadorDTO {
         this.t3 = t3;
         this.fp = fp;
 
-        // ✅ Asignar propietario si existe
+        // Propietario
         if (propietario != null) {
             this.propietarioId = propietario.getId();
             this.propietarioUsername = propietario.getUsername();
@@ -113,11 +124,11 @@ public class JugadorDTO {
 
     public Long getPropietarioId() {
         return propietarioId;
-    }  // ✅ Nuevo
+    } // ✅ Nuevo
 
     public String getPropietarioUsername() {
         return propietarioUsername;
-    }  // ✅ Nuevo
+    } // ✅ Nuevo
 
     // Setters
     public void setId(Long id) {
@@ -178,11 +189,11 @@ public class JugadorDTO {
 
     public void setPropietarioId(Long propietarioId) {
         this.propietarioId = propietarioId;
-    }  // ✅ Nuevo
+    } // ✅ Nuevo
 
     public void setPropietarioUsername(String propietarioUsername) {
         this.propietarioUsername = propietarioUsername;
-    }  // ✅ Nuevo
+    } // ✅ Nuevo
 
     public boolean isEsTitular() {
         return esTitular;

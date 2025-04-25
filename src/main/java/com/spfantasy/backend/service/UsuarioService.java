@@ -3,7 +3,9 @@ package com.spfantasy.backend.service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,7 +94,7 @@ public class UsuarioService implements UserDetailsService {
     }
   }
 
-  public boolean comprarJugador(String username, Jugador jugador) {
+  public boolean comprarJugador(String username, JugadorLiga jugador) {
     Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
     if (usuarioOpt.isPresent()) {
       Usuario usuario = usuarioOpt.get();
@@ -106,7 +108,7 @@ public class UsuarioService implements UserDetailsService {
       if (usuario.getDinero().compareTo(jugador.getPrecioVenta()) >= 0) {
 
         // Contar los suplentes en la plantilla
-        long suplentes = usuario.getPlantilla().stream().filter(j -> !j.getTitular()).count();
+        long suplentes = usuario.getPlantilla().stream().filter(j -> !j.isEsTitular()).count();
 
         // Si el banquillo está lleno, cancelar la compra
         if (suplentes >= 5) {
@@ -123,7 +125,7 @@ public class UsuarioService implements UserDetailsService {
         usuario.setDinero(usuario.getDinero().subtract(jugador.getPrecioVenta()));
 
         usuarioRepository.save(usuario);
-        jugadorRepository.save(jugador); // ✅ Se guarda el cambio en la base de datos
+        jugadorLigaRepository.save(jugador);
 
         System.out.println("✅ Jugador comprado y asignado al usuario: " + usuario.getUsername());
         return true;
@@ -172,31 +174,34 @@ public class UsuarioService implements UserDetailsService {
     return true;
   }
 
-  public boolean venderJugador(String username, Jugador jugador) {
+  public boolean venderJugador(String username, JugadorLiga jugador) {
     Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
 
     if (usuarioOpt.isPresent()) {
       Usuario usuario = usuarioOpt.get();
-      Optional<Jugador> jugadorEnPlantilla = usuario.getPlantilla().stream()
-          .filter(j -> j.getId().equals(jugador.getId()))
+
+      Optional<JugadorLiga> jugadorEnPlantilla = usuario.getPlantilla().stream()
+          .filter(j -> j.getJugadorBase().getId().equals(jugador.getId()))
           .findFirst();
 
       if (jugadorEnPlantilla.isPresent()) {
-        Jugador jugadorAEliminar = jugadorEnPlantilla.get();
+        JugadorLiga jugadorAEliminar = jugadorEnPlantilla.get();
         usuario.getPlantilla().remove(jugadorAEliminar);
         usuario.setDinero(usuario.getDinero().add(jugadorAEliminar.getPrecioVenta()));
 
         usuarioRepository.save(usuario);
-        jugadorRepository.liberarJugador(jugadorAEliminar.getId());
+        jugadorAEliminar.setDisponible(true);
+        jugadorAEliminar.setPropietario(null);
+        jugadorLigaRepository.save(jugadorAEliminar);
 
         // ✅ REGISTRAR TRANSACCIÓN
         Transaccion transaccion = new Transaccion();
         transaccion.setFecha(LocalDateTime.now());
         transaccion.setPrecio(jugadorAEliminar.getPrecioVenta().intValue());
-        transaccion.setJugador(null); // no es jugadorLiga, omítelo o añade lógica
+        transaccion.setJugador(jugadorAEliminar); // ahora sí es del tipo correcto
         transaccion.setComprador(null); // no hay comprador porque es al mercado
         transaccion.setVendedor(usuario);
-        transaccion.setLiga(null); // si quieres asignar liga puedes hacerlo también
+        transaccion.setLiga(jugadorAEliminar.getLiga());
 
         transaccionService.guardarTransaccion(transaccion);
 
@@ -219,14 +224,14 @@ public class UsuarioService implements UserDetailsService {
         Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRole().name())));
   }
 
+  @Transactional
   public boolean guardarPlantilla(String username, List<Long> titularesIds, List<Long> suplentesIds) {
     Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
 
     if (usuarioOpt.isPresent()) {
       Usuario usuario = usuarioOpt.get();
-      List<Jugador> nuevaPlantilla = new ArrayList<>();
+      List<JugadorLiga> nuevaPlantilla = new ArrayList<>();
 
-      // Verificar que los titulares sean exactamente 5
       if (titularesIds.size() != 5) {
         System.out.println("❌ Error: Se intentó guardar una plantilla sin 5 titulares.");
         return false;
@@ -234,18 +239,18 @@ public class UsuarioService implements UserDetailsService {
 
       // Asignar titulares
       for (Long id : titularesIds) {
-        Optional<Jugador> jugadorOpt = jugadorRepository.findById(id);
+        Optional<JugadorLiga> jugadorOpt = jugadorLigaRepository.findById(id);
         jugadorOpt.ifPresent(j -> {
-          j.setTitular(true);
+          j.setEsTitular(true);
           nuevaPlantilla.add(j);
         });
       }
 
       // Asignar suplentes
       for (Long id : suplentesIds) {
-        Optional<Jugador> jugadorOpt = jugadorRepository.findById(id);
+        Optional<JugadorLiga> jugadorOpt = jugadorLigaRepository.findById(id);
         jugadorOpt.ifPresent(j -> {
-          j.setTitular(false);
+          j.setEsTitular(false);
           nuevaPlantilla.add(j);
         });
       }
@@ -340,6 +345,35 @@ public class UsuarioService implements UserDetailsService {
     transaccionRepository.save(transaccion);
 
     return true;
+  }
+
+  public Integer calcularPuntosDeTitulares(Usuario usuario) {
+    if (usuario.getPlantilla() == null)
+      return 0;
+
+    return usuario.getPlantilla().stream()
+        .filter(JugadorLiga::isEsTitular) // Solo titulares
+        .mapToInt(j -> j.getPts() != null ? j.getPts() : 0) // Sumamos pts, si no hay, contamos 0
+        .sum();
+  }
+
+  public Map<Long, String> obtenerPuntosSemanalesTitulares(Usuario usuario) {
+    Map<Long, String> puntosSemanales = new HashMap<>();
+
+    if (usuario.getPlantilla() == null)
+      return puntosSemanales;
+
+    for (JugadorLiga jugador : usuario.getPlantilla()) {
+      if (jugador.isEsTitular()) {
+        if (jugador.getPts() == null || jugador.getPts() == 0) {
+          puntosSemanales.put(jugador.getId(), "Pendiente de Jugar");
+        } else {
+          puntosSemanales.put(jugador.getId(), jugador.getPts() + " pts");
+        }
+      }
+    }
+
+    return puntosSemanales;
   }
 
 }

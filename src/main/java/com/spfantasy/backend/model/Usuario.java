@@ -21,6 +21,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import jakarta.persistence.OneToMany;
 
 @Getter
 @Setter
@@ -53,10 +54,9 @@ public class Usuario {
     @Column(name = "dinero_pendiente", nullable = false)
     private BigDecimal dineroPendiente = BigDecimal.ZERO;
 
-    @ManyToMany
-    @JoinTable(name = "plantilla_jugadores", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "jugador_id"))
+    @OneToMany(mappedBy = "propietario")
     @JsonIgnore
-    private List<Jugador> plantilla;
+    private List<JugadorLiga> plantilla;
 
     @ManyToMany(mappedBy = "usuarios")
     private List<GrupoChat> grupos = new ArrayList<>();
@@ -108,7 +108,7 @@ public class Usuario {
         return dinero;
     }
 
-    public List<Jugador> getPlantilla() {
+    public List<JugadorLiga> getPlantilla() {
         return plantilla;
     }
 
@@ -136,12 +136,12 @@ public class Usuario {
         this.dinero = dinero;
     }
 
-    public void setPlantilla(List<Jugador> plantilla) {
-        this.plantilla = plantilla;
-    }
-
     public void setGrupos(List<GrupoChat> grupos) {
         this.grupos = grupos;
+    }
+
+    public void setPlantilla(List<JugadorLiga> plantilla) {
+        this.plantilla = plantilla;
     }
 
 }

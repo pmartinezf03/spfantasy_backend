@@ -16,15 +16,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.spfantasy.backend.dto.JugadorDTO;
 import com.spfantasy.backend.model.Jugador;
+import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.repository.JugadorRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import com.spfantasy.backend.service.JugadorService;
 
 import com.spfantasy.backend.service.JugadorStatsFetcherService;
+import com.spfantasy.backend.service.UsuarioService;
 
 @RestController
-@RequestMapping("/api/jugadores") // ← ESTE CAMBIO ES CLAVE
+@RequestMapping("/api/jugadores")
 public class JugadorController {
 
     @Autowired
@@ -38,6 +40,9 @@ public class JugadorController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private UsuarioService usuarioService;
 
     // ✅ Nuevo endpoint para obtener solo los jugadores disponibles en el mercado
     @GetMapping("/mercado")
@@ -53,40 +58,25 @@ public class JugadorController {
 
     @PostMapping("/{username}/vender")
     public ResponseEntity<String> venderJugador(@PathVariable String username, @RequestBody JugadorDTO jugadorDTO) {
-        // Convertir JugadorDTO a Jugador
-        Jugador jugador = new Jugador();
-        jugador.setId(jugadorDTO.getId());
-        jugador.setNombre(jugadorDTO.getNombre());
-        jugador.setPosicion(jugadorDTO.getPosicion());
-        jugador.setPrecioVenta(BigDecimal.valueOf(jugadorDTO.getPrecioVenta()));
-        jugador.setRendimiento(BigDecimal.valueOf(jugadorDTO.getRendimiento()));
-        jugador.setPuntosTotales(jugadorDTO.getPuntosTotales());
-        jugador.setFotoUrl(jugadorDTO.getFotoUrl());
 
-        // Verificación de la plantilla del usuario
         Optional<Usuario> usuarioOpt = usuarioRepository.findByUsername(username);
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
-            System.out.println("Usuario encontrado: " + usuario.getUsername());
-            System.out.println("Jugadores en plantilla: " + usuario.getPlantilla());
-
-            boolean jugadorEnPlantilla = usuario.getPlantilla().stream()
-                    .anyMatch(j -> j.getId().equals(jugador.getId()));
-
-            if (!jugadorEnPlantilla) {
-                System.out.println("❌ El jugador no está en la plantilla del usuario.");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("El jugador no está en la plantilla del usuario");
-            } else {
-                System.out.println("✅ El jugador está en la plantilla y puede ser vendido.");
-            }
-        } else {
-            System.out.println("❌ Usuario no encontrado: " + username);
+        if (usuarioOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuario no encontrado");
         }
 
-        // Llamar al servicio de venta
-        boolean ventaExitosa = jugadorService.venderJugador(username, jugador);
+        Usuario usuario = usuarioOpt.get();
+        Optional<JugadorLiga> jugadorOpt = usuario.getPlantilla().stream()
+                .filter(j -> j.getId().equals(jugadorDTO.getId()))
+                .findFirst();
+
+        if (jugadorOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("El jugador no está en la plantilla del usuario");
+        }
+
+        JugadorLiga jugadorLiga = jugadorOpt.get(); // ✅ ahora sí existe la variable
+
+        boolean ventaExitosa = usuarioService.venderJugador(username, jugadorLiga);
+
         if (ventaExitosa) {
             return ResponseEntity.ok("Jugador vendido con éxito");
         } else {
