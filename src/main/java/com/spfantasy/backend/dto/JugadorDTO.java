@@ -3,9 +3,6 @@ package com.spfantasy.backend.dto;
 import com.spfantasy.backend.model.Equipo;
 import com.spfantasy.backend.model.Usuario;
 
-import com.spfantasy.backend.model.Equipo;
-import com.spfantasy.backend.model.Usuario;
-
 public class JugadorDTO {
 
     private Long id; // Puedes usar este como id principal del DTO
@@ -201,6 +198,14 @@ public class JugadorDTO {
 
     public void setEsTitular(boolean esTitular) {
         this.esTitular = esTitular;
+    }
+
+    public Long getIdLiga() {
+        return idLiga;
+    }
+
+    public void setIdLiga(Long idLiga) {
+        this.idLiga = idLiga;
     }
 
 }

@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.spfantasy.backend.model.Role;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,17 +13,11 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
-@Getter
-@Setter
+
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -67,6 +60,7 @@ public class Usuario {
     public int getPuntos() {
         return puntos;
     }
+    
 
     public void setPuntos(int puntos) {
         this.puntos = puntos;
@@ -142,6 +136,16 @@ public class Usuario {
 
     public void setPlantilla(List<JugadorLiga> plantilla) {
         this.plantilla = plantilla;
+    }
+
+
+    public String getAlias() {
+        return alias;
+    }
+
+
+    public void setAlias(String alias) {
+        this.alias = alias;
     }
 
 }

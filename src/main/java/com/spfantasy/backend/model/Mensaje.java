@@ -1,12 +1,17 @@
 package com.spfantasy.backend.model;
 
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+
 @Entity
 @Table(name = "mensajes")
 public class Mensaje {
@@ -80,5 +85,19 @@ public class Mensaje {
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
+    public Mensaje() {
+    }
+
+    public Mensaje(Long id, Usuario remitente, GrupoChat grupo, Usuario destinatario, String contenido,
+            LocalDateTime timestamp) {
+        this.id = id;
+        this.remitente = remitente;
+        this.grupo = grupo;
+        this.destinatario = destinatario;
+        this.contenido = contenido;
+        this.timestamp = timestamp;
+    }
+    
 
 }

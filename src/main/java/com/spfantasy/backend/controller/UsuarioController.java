@@ -22,16 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.spfantasy.backend.config.JwtUtil;
 import com.spfantasy.backend.dto.JugadorDTO;
 import com.spfantasy.backend.dto.LoginResponseDTO;
+import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 import com.spfantasy.backend.dto.UsuarioDTO;
-import com.spfantasy.backend.model.Jugador;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Role;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import com.spfantasy.backend.service.UsuarioService;
-
-import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 
 @RestController
 @RequestMapping("/api/usuarios")
