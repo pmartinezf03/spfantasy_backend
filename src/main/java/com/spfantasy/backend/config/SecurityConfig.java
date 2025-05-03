@@ -21,11 +21,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors().and()
-                .csrf().disable()
-                .authorizeHttpRequests(auth -> auth
+            .cors().and()
+            .csrf().disable()
+            .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/**").permitAll()
-                );
+            );
 
         return http.build();
     }
@@ -33,7 +33,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost", "http://localhost:4200"));
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost",
+            "http://localhost:4200",
+            "http://100.24.45.15"
+        ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -12,14 +12,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws"  )  // ✅ Punto de conexión WebSocket
-                .setAllowedOrigins("http://localhost:4200")  // Permitir Angular
-                .withSockJS();  // Habilitar compatibilidad con clientes sin WebSocket nativo
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")  // 🔥 PERMITIR TODOS para pruebas
+                .withSockJS();
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/chat");  // ✅ Prefijo para recibir mensajes
-        registry.setApplicationDestinationPrefixes("/app");  // ✅ Prefijo para enviar mensajes
+        registry.enableSimpleBroker("/chat");  
+        registry.setApplicationDestinationPrefixes("/app");
     }
 }
