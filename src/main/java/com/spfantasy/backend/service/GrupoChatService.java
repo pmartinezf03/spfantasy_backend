@@ -2,7 +2,10 @@ package com.spfantasy.backend.service;
 
 import com.spfantasy.backend.model.GrupoChat;
 import com.spfantasy.backend.model.Usuario;
+import com.spfantasy.backend.model.UsuarioLiga;
 import com.spfantasy.backend.repository.GrupoChatRepository;
+import com.spfantasy.backend.repository.LigaRepository;
+import com.spfantasy.backend.repository.UsuarioLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,12 @@ public class GrupoChatService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private LigaRepository ligaRepository;
+
+    @Autowired
+    private UsuarioLigaRepository usuarioLigaRepository;
 
     // ✅ Obtener todos los grupos de chat
     public List<GrupoChat> obtenerTodosLosGrupos() {
@@ -64,6 +73,19 @@ public class GrupoChatService {
         return grupoChatRepository.save(grupo);
     }
 
+    public GrupoChatDTO obtenerGrupoDeLigaDelUsuario(Long usuarioId) {
+        UsuarioLiga usuarioLiga = usuarioLigaRepository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no está en ninguna liga"));
+
+        Long ligaId = usuarioLiga.getLiga().getId();
+        String nombreEsperado = "liga-" + ligaId;
+
+        GrupoChat grupo = grupoChatRepository.findByNombre(nombreEsperado)
+                .orElseThrow(() -> new RuntimeException("Grupo de liga no encontrado"));
+
+        return convertirADTO(grupo);
+    }
+
     public List<GrupoChat> obtenerGruposDelUsuario(Long usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -71,7 +93,16 @@ public class GrupoChatService {
         return grupoChatRepository.findByUsuariosContaining(usuario);
     }
 
-    private GrupoChatDTO convertirADTO(GrupoChat grupo) {
+    public GrupoChat obtenerGrupoLigaDelUsuario(Long usuarioId) {
+        UsuarioLiga usuarioLiga = usuarioLigaRepository.findByUsuarioId(usuarioId)
+                .orElseThrow(() -> new RuntimeException("Usuario no está en ninguna liga"));
+
+        String nombreGrupo = "liga-" + usuarioLiga.getLiga().getId();
+        return grupoChatRepository.findByNombre(nombreGrupo)
+                .orElseThrow(() -> new RuntimeException("Grupo de la liga no encontrado"));
+    }
+
+    public GrupoChatDTO convertirADTO(GrupoChat grupo) {
         Set<Long> usuariosIds = grupo.getUsuarios().stream()
                 .map(Usuario::getId)
                 .collect(java.util.stream.Collectors.toSet());

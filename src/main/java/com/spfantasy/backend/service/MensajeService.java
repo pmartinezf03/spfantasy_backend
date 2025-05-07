@@ -51,7 +51,19 @@ public class MensajeService {
                         }
 
                         mensajeRepository.save(mensaje);
-                        messagingTemplate.convertAndSend("/chat/mensajes", mensaje);
+
+                        // Emitir DTO por canal adecuado (igual que en el controller)
+                        MensajeDTO dto = convertirADTO(mensaje);
+
+                        if (grupoId != null) {
+                                messagingTemplate.convertAndSend("/chat/liga/" + grupoId, dto);
+                        } else if (mensaje.getRemitente().getAlias() != null && mensaje.getDestinatario() != null) {
+                                String canal = generarNombreCanal(
+                                                mensaje.getRemitente().getAlias(),
+                                                mensaje.getDestinatario().getAlias());
+                                messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
+                        }
+
                 } else if (destinatarioId != null) {
                         Usuario destinatario = usuarioRepository.findById(destinatarioId)
                                         .orElseThrow(() -> new RuntimeException("Usuario destinatario no encontrado"));
@@ -65,7 +77,17 @@ public class MensajeService {
                         }
 
                         mensajeRepository.save(mensaje);
-                        messagingTemplate.convertAndSend("/chat/mensajes", mensaje);
+
+                        // Emitir DTO por canal adecuado (como en grupo)
+                        MensajeDTO dto = convertirADTO(mensaje);
+
+                        if (mensaje.getRemitente().getAlias() != null && mensaje.getDestinatario() != null) {
+                                String canal = generarNombreCanal(
+                                                mensaje.getRemitente().getAlias(),
+                                                mensaje.getDestinatario().getAlias());
+                                messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
+                        }
+
                 } else {
                         throw new RuntimeException("Debe especificarse un destinatario o un grupo");
                 }

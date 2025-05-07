@@ -14,24 +14,29 @@ import com.spfantasy.backend.service.MensajeService;
 @Controller
 public class ChatWebSocketController {
 
-    @Autowired
-    private MensajeService mensajeService;
+        @Autowired
+        private MensajeService mensajeService;
 
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
+        @Autowired
+        private SimpMessagingTemplate messagingTemplate;
 
-    @MessageMapping("/chat/enviar") // Recibe desde Angular
-    public void procesarMensaje(Map<String, Object> request) {
-        Long remitenteId = Long.valueOf(request.get("remitenteId").toString());
-        Long destinatarioId = request.get("destinatarioId") != null
-                ? Long.valueOf(request.get("destinatarioId").toString())
-                : null;
-        Long grupoId = request.get("grupoId") != null ? Long.valueOf(request.get("grupoId").toString()) : null;
-        String contenido = request.get("contenido").toString();
-
-        Mensaje mensaje = mensajeService.enviarMensaje(remitenteId, destinatarioId, grupoId, contenido);
-
-        MensajeDTO mensajeDTO = new MensajeDTO(
+        @MessageMapping("/chat/enviar")
+        public void procesarMensaje(MensajeDTO mensajeDTO) {
+            System.out.println("🟢 Mensaje recibido en /chat/enviar: " + mensajeDTO.getContenido());
+        
+            Long remitenteId = mensajeDTO.getRemitenteId();
+            Long destinatarioId = mensajeDTO.getDestinatarioId();
+            Long grupoId = mensajeDTO.getGrupoId();
+            String contenido = mensajeDTO.getContenido();
+        
+            if (remitenteId == null || contenido == null || contenido.trim().isEmpty()) {
+                System.out.println("❌ Mensaje inválido recibido.");
+                return;
+            }
+        
+            Mensaje mensaje = mensajeService.enviarMensaje(remitenteId, destinatarioId, grupoId, contenido);
+        
+            MensajeDTO dto = new MensajeDTO(
                 mensaje.getId(),
                 mensaje.getRemitente().getId(),
                 mensaje.getRemitente().getUsername(),
@@ -39,67 +44,75 @@ public class ChatWebSocketController {
                 mensaje.getGrupo() != null ? mensaje.getGrupo().getId() : null,
                 mensaje.getContenido(),
                 mensaje.getTimestamp(),
-                mensaje.getRemitente().getAlias());
+                mensaje.getRemitente().getAlias()
+            );
+        
+            if (grupoId != null) {
+                messagingTemplate.convertAndSend("/chat/liga/" + grupoId, dto);
+            } else if (mensaje.getRemitente().getAlias() != null && mensaje.getDestinatario() != null) {
+                String alias1 = mensaje.getRemitente().getAlias();
+                String alias2 = mensaje.getDestinatario().getAlias();
+                String canal = alias1.compareTo(alias2) < 0 ? alias1 + "-" + alias2 : alias2 + "-" + alias1;
+                messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
+            }
+        }
+        
 
-        // Emitir al frontend el DTO limpio
-        messagingTemplate.convertAndSend("/chat/mensajes", mensajeDTO);
-    }
+        @MessageMapping("/chat/liga/{grupoId}")
+        public void procesarMensajeGrupo(
+                        @org.springframework.messaging.handler.annotation.DestinationVariable Long grupoId,
+                        MensajeDTO mensajeDTO) {
 
-    @MessageMapping("/chat/liga/{grupoId}")
-    public void procesarMensajeGrupo(
-            @org.springframework.messaging.handler.annotation.DestinationVariable Long grupoId,
-            MensajeDTO mensajeDTO) {
+                Mensaje mensaje = mensajeService.enviarMensaje(
+                                mensajeDTO.getRemitenteId(),
+                                null, // no hay destinatario directo
+                                grupoId,
+                                mensajeDTO.getContenido());
 
-        Mensaje mensaje = mensajeService.enviarMensaje(
-                mensajeDTO.getRemitenteId(),
-                null, // no hay destinatario directo
-                grupoId,
-                mensajeDTO.getContenido());
+                MensajeDTO dto = new MensajeDTO(
+                                mensaje.getId(),
+                                mensaje.getRemitente().getId(),
+                                mensaje.getRemitente().getUsername(),
+                                null,
+                                grupoId,
+                                mensaje.getContenido(),
+                                mensaje.getTimestamp(),
+                                mensaje.getRemitente().getAlias());
 
-        MensajeDTO dto = new MensajeDTO(
-                mensaje.getId(),
-                mensaje.getRemitente().getId(),
-                mensaje.getRemitente().getUsername(),
-                null,
-                grupoId,
-                mensaje.getContenido(),
-                mensaje.getTimestamp(),
-                mensaje.getRemitente().getAlias());
-
-        messagingTemplate.convertAndSend("/chat/liga/" + grupoId, dto);
-    }
-
-    @MessageMapping("/chat/privado/{canal}")
-    public void procesarMensajePrivado(
-            @org.springframework.messaging.handler.annotation.DestinationVariable String canal,
-            MensajeDTO mensajeDTO) {
-
-        // Separar los alias del canal tipo "pepe-maria"
-        String[] partes = canal.split("-");
-        if (partes.length != 2) {
-            throw new RuntimeException("Canal privado mal formado: " + canal);
+                messagingTemplate.convertAndSend("/chat/liga/" + grupoId, dto);
         }
 
-        String alias1 = partes[0];
-        String alias2 = partes[1];
+        @MessageMapping("/chat/privado/{canal}")
+        public void procesarMensajePrivado(
+                        @org.springframework.messaging.handler.annotation.DestinationVariable String canal,
+                        MensajeDTO mensajeDTO) {
 
-        // Enviar el mensaje usando alias
-        Mensaje mensaje = mensajeService.enviarMensajePorAlias(
-                mensajeDTO.getRemitenteAlias(),
-                alias1.equals(mensajeDTO.getRemitenteAlias()) ? alias2 : alias1,
-                mensajeDTO.getContenido());
+                // Separar los alias del canal tipo "pepe-maria"
+                String[] partes = canal.split("-");
+                if (partes.length != 2) {
+                        throw new RuntimeException("Canal privado mal formado: " + canal);
+                }
 
-        MensajeDTO dto = new MensajeDTO(
-                mensaje.getId(),
-                mensaje.getRemitente().getId(),
-                mensaje.getRemitente().getUsername(),
-                mensaje.getDestinatario() != null ? mensaje.getDestinatario().getId() : null,
-                null,
-                mensaje.getContenido(),
-                mensaje.getTimestamp(),
-                mensaje.getRemitente().getAlias());
+                String alias1 = partes[0];
+                String alias2 = partes[1];
 
-        messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
-    }
+                // Enviar el mensaje usando alias
+                Mensaje mensaje = mensajeService.enviarMensajePorAlias(
+                                mensajeDTO.getRemitenteAlias(),
+                                alias1.equals(mensajeDTO.getRemitenteAlias()) ? alias2 : alias1,
+                                mensajeDTO.getContenido());
+
+                MensajeDTO dto = new MensajeDTO(
+                                mensaje.getId(),
+                                mensaje.getRemitente().getId(),
+                                mensaje.getRemitente().getUsername(),
+                                mensaje.getDestinatario() != null ? mensaje.getDestinatario().getId() : null,
+                                null,
+                                mensaje.getContenido(),
+                                mensaje.getTimestamp(),
+                                mensaje.getRemitente().getAlias());
+
+                messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
+        }
 
 }

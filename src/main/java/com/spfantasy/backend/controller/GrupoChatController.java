@@ -4,6 +4,7 @@ import com.spfantasy.backend.dto.GrupoChatDTO;
 import com.spfantasy.backend.model.GrupoChat;
 import com.spfantasy.backend.service.GrupoChatService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +32,13 @@ public class GrupoChatController {
         Long creadorId = Long.valueOf(request.get("creadorId").toString());
 
         return grupoChatService.crearGrupo(nombre, descripcion, passwordGrupo, creadorId);
+    }
+
+    @GetMapping("/liga/{usuarioId}")
+    public ResponseEntity<GrupoChatDTO> obtenerGrupoDeLigaDelUsuario(@PathVariable Long usuarioId) {
+        GrupoChat grupo = grupoChatService.obtenerGrupoLigaDelUsuario(usuarioId);
+        GrupoChatDTO dto = grupoChatService.convertirADTO(grupo);
+        return ResponseEntity.ok(dto);
     }
 
     // ✅ Unirse a un grupo de chat
