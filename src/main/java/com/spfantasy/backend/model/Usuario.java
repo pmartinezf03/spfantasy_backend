@@ -1,11 +1,12 @@
 package com.spfantasy.backend.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,7 +17,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
 
 @Entity
 @Table(name = "usuarios")
@@ -52,15 +52,32 @@ public class Usuario {
     private List<JugadorLiga> plantilla;
 
     @ManyToMany(mappedBy = "usuarios")
+    @JsonIgnore
     private List<GrupoChat> grupos = new ArrayList<>();
 
     @Column(unique = true)
     private String alias;
 
+    @Column(name = "vip_hasta")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime vipHasta;
+
+    @JsonIgnore
+    public boolean isVip() {
+        return vipHasta != null && vipHasta.isAfter(LocalDateTime.now());
+    }
+
+    public LocalDateTime getVipHasta() {
+        return vipHasta;
+    }
+
+    public void setVipHasta(LocalDateTime vipHasta) {
+        this.vipHasta = vipHasta;
+    }
+
     public int getPuntos() {
         return puntos;
     }
-    
 
     public void setPuntos(int puntos) {
         this.puntos = puntos;
@@ -138,11 +155,9 @@ public class Usuario {
         this.plantilla = plantilla;
     }
 
-
     public String getAlias() {
         return alias;
     }
-
 
     public void setAlias(String alias) {
         this.alias = alias;

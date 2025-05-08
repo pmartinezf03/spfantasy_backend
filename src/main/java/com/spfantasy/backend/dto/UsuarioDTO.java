@@ -1,11 +1,41 @@
 package com.spfantasy.backend.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import com.spfantasy.backend.model.Usuario;
 
-
 public class UsuarioDTO {
+
+    private Long id;
+    private String username;
+    private String role;
+    private BigDecimal dinero;
+    private BigDecimal dineroPendiente;
+    private LocalDate vipHasta;
+
+    public UsuarioDTO() {
+    }
+
+    public UsuarioDTO(Long id, String username, String role, BigDecimal dinero, BigDecimal dineroPendiente,
+            LocalDate vipHasta) {
+        this.id = id;
+        this.username = username;
+        this.role = role;
+        this.dinero = dinero;
+        this.dineroPendiente = dineroPendiente;
+        this.vipHasta = vipHasta;
+    }
+
+    public UsuarioDTO(Usuario usuario) {
+        this.id = usuario.getId();
+        this.username = usuario.getUsername();
+        this.role = usuario.getRole().name();
+        this.dinero = usuario.getDinero();
+        this.dineroPendiente = usuario.getDineroPendiente();
+        this.vipHasta = usuario.getVipHasta() != null ? usuario.getVipHasta().toLocalDate() : null;
+    }
+
     public Long getId() {
         return id;
     }
@@ -45,31 +75,12 @@ public class UsuarioDTO {
     public void setDineroPendiente(BigDecimal dineroPendiente) {
         this.dineroPendiente = dineroPendiente;
     }
-    
 
-    public UsuarioDTO() {
+    public LocalDate getVipHasta() {
+        return vipHasta;
     }
 
-    public UsuarioDTO(Long id, String username, String role, BigDecimal dinero, BigDecimal dineroPendiente) {
-        this.id = id;
-        this.username = username;
-        this.role = role;
-        this.dinero = dinero;
-        this.dineroPendiente = dineroPendiente;
-    }
-
-
-    private Long id;
-    private String username;
-    private String role;
-    private BigDecimal dinero;
-    private BigDecimal dineroPendiente;
-
-    public UsuarioDTO(Usuario usuario) {
-        this.id = usuario.getId();
-        this.username = usuario.getUsername();
-        this.role = usuario.getRole().name();
-        this.dinero = usuario.getDinero();
-        this.dineroPendiente = usuario.getDineroPendiente();
+    public void setVipHasta(LocalDate vipHasta) {
+        this.vipHasta = vipHasta;
     }
 }

@@ -1,6 +1,8 @@
 package com.spfantasy.backend.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -338,6 +340,17 @@ public class UsuarioController {
 
         Map<Long, String> puntos = usuarioService.obtenerPuntosSemanalesTitulares(usuario);
         return ResponseEntity.ok(puntos);
+    }
+
+    @PutMapping("/{id}/hacer-vip")
+    public ResponseEntity<Usuario> hacerVip(@PathVariable Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setVipHasta(LocalDateTime.now().plusMonths(1));
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok(usuario);
     }
 
 }
