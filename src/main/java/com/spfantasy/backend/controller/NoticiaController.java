@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/noticias")
-public class NoticiaController {  // Asegurar que el nombre coincide con el de la clase
+public class NoticiaController { // Asegurar que el nombre coincide con el de la clase
     private final NoticiaService noticiaService;
 
     public NoticiaController(NoticiaService noticiaService) {
