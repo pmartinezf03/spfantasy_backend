@@ -406,4 +406,22 @@ public class UsuarioController {
                 .body(datos);
     }
 
+    @PutMapping("/{id}/registrar-login")
+    public ResponseEntity<Void> registrarLogin(@PathVariable Long id) {
+        usuarioService.registrarLogin(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/estadisticas/{id}/login")
+    public ResponseEntity<Void> registrarLoginEstadisticas(@PathVariable Long id) {
+        usuarioService.registrarLogin(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/nivel")
+    public ResponseEntity<Usuario> actualizarNivel(@PathVariable Long id) {
+        Usuario usuario = usuarioService.actualizarNivelUsuario(id);
+        return ResponseEntity.ok(usuario);
+    }
+
 }

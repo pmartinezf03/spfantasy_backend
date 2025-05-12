@@ -1,5 +1,6 @@
 package com.spfantasy.backend.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -374,6 +375,46 @@ public class UsuarioService implements UserDetailsService {
     }
 
     return puntosSemanales;
+  }
+
+  @Transactional
+  public void registrarLogin(Long usuarioId) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+    LocalDateTime ahora = LocalDateTime.now();
+    LocalDate hoy = ahora.toLocalDate();
+    LocalDateTime ultimoLogin = usuario.getUltimoLogin();
+
+    // Sumar login diario
+    usuario.setLogins(usuario.getLogins() + 1);
+
+    // Verificar racha
+    if (ultimoLogin != null) {
+      LocalDate anterior = ultimoLogin.toLocalDate();
+      if (anterior.equals(hoy.minusDays(1))) {
+        usuario.setRachaLogin(usuario.getRachaLogin() + 1);
+      } else if (!anterior.equals(hoy)) {
+        usuario.setRachaLogin(1); // reinicia si no fue ayer
+      }
+    } else {
+      usuario.setRachaLogin(1); // primer login
+    }
+
+    // Contar días activos (solo si no ha logueado ya hoy)
+    if (ultimoLogin == null || !ultimoLogin.toLocalDate().equals(hoy)) {
+      usuario.setDiasActivo(usuario.getDiasActivo() + 1);
+    }
+
+    usuario.setUltimoLogin(ahora); // actualiza la fecha
+    usuarioRepository.save(usuario);
+  }
+
+  public Usuario actualizarNivelUsuario(Long usuarioId) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    usuario.actualizarNivel();
+    return usuarioRepository.save(usuario);
   }
 
 }

@@ -94,6 +94,17 @@ public class Usuario {
     @Column(name = "avatar_bin")
     private byte[] avatarBytes;
 
+    @Column(name = "ultimo_login")
+    private LocalDateTime ultimoLogin;
+
+    public LocalDateTime getUltimoLogin() {
+        return ultimoLogin;
+    }
+
+    public void setUltimoLogin(LocalDateTime ultimoLogin) {
+        this.ultimoLogin = ultimoLogin;
+    }
+
     private int compras;
     private int ventas;
     private int logins;
@@ -103,6 +114,15 @@ public class Usuario {
     private int diasActivo;
     private int rachaLogin;
     private int partidasJugadas;
+    private int nivel;
+
+    public int getNivel() {
+        return nivel;
+    }
+
+    public void setNivel(int nivel) {
+        this.nivel = nivel;
+    }
 
     public List<UsuarioLogro> getLogrosDesbloqueados() {
         return logrosDesbloqueados;
@@ -291,6 +311,11 @@ public class Usuario {
 
     public void setAvatarBytes(byte[] avatarBytes) {
         this.avatarBytes = avatarBytes;
+    }
+
+    public void actualizarNivel() {
+        // Calcula el nivel basándose en la experiencia
+        this.nivel = (experiencia / 10) + 1; // Cada 10 puntos sube de nivel
     }
 
 }
