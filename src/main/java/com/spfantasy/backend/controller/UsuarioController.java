@@ -1,12 +1,18 @@
 package com.spfantasy.backend.controller;
 
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spfantasy.backend.config.JwtUtil;
 import com.spfantasy.backend.dto.JugadorDTO;
@@ -351,6 +358,52 @@ public class UsuarioController {
         usuarioRepository.save(usuario);
 
         return ResponseEntity.ok(usuario);
+    }
+
+    @PostMapping("/{id}/avatar")
+    public ResponseEntity<?> subirAvatar(
+            @PathVariable Long id,
+            @RequestParam("avatar") MultipartFile file) {
+        try {
+            System.out.println("🖼️ Recibiendo avatar para usuario ID: " + id);
+            System.out.println("📁 Nombre del archivo recibido: " + file.getOriginalFilename());
+            System.out.println("📏 Tamaño del archivo: " + file.getSize());
+
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("El archivo está vacío");
+            }
+
+            Optional<Usuario> optionalUsuario = usuarioRepository.findById(id);
+            if (optionalUsuario.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+            }
+
+            Usuario usuario = optionalUsuario.get();
+            usuario.setAvatarBytes(file.getBytes());
+            usuario.setAvatarUrl(null); // limpiamos si hay ruta antigua
+
+            usuarioRepository.save(usuario);
+
+            return ResponseEntity.ok("Avatar guardado correctamente");
+
+        } catch (Exception e) {
+            e.printStackTrace(); // 👈 imprime detalles del error
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al guardar avatar: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/avatar")
+    public ResponseEntity<byte[]> obtenerAvatar(@PathVariable Long id) {
+        Usuario usuario = usuarioRepository.findById(id).orElseThrow();
+        byte[] datos = usuario.getAvatarBytes();
+
+        if (datos == null)
+            return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "image/png")
+                .body(datos);
     }
 
 }

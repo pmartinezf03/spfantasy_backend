@@ -33,9 +33,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/usuarios/login",
-                                "/api/usuarios/registro")
-                        .permitAll() // solo estas rutas son públicas
-                        .anyRequest().authenticated() // ✅ todo lo demás protegido
+                                "/api/usuarios/registro",
+                                "/api/usuarios/*/avatar")
+                        .permitAll()
+                        .requestMatchers(
+                                "/api/**" // ✅ Proteger todas las rutas API, incluyendo /api/logros/**
+                        ).authenticated()
+                        .anyRequest().permitAll() // permite assets, index.html, etc.
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

@@ -7,6 +7,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,6 +16,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -21,6 +24,13 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
+
+    public Usuario(Long id) {
+        this.id = id;
+    }
+
+    public Usuario() {
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,12 +65,60 @@ public class Usuario {
     @JsonIgnore
     private List<GrupoChat> grupos = new ArrayList<>();
 
+    public byte[] getAvatarData() {
+        return avatarData;
+    }
+
+    public void setAvatarData(byte[] avatarData) {
+        this.avatarData = avatarData;
+    }
+
     @Column(unique = true)
     private String alias;
 
     @Column(name = "vip_hasta")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime vipHasta;
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UsuarioLogro> logrosDesbloqueados = new ArrayList<>();
+
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Lob
+    @Column(name = "avatar_data")
+    private byte[] avatarData;
+
+    @Lob
+    @Column(name = "avatar_bin")
+    private byte[] avatarBytes;
+
+    private int compras;
+    private int ventas;
+    private int logins;
+    private int sesiones;
+
+    private int experiencia; // Para la barra de experiencia
+    private int diasActivo;
+    private int rachaLogin;
+    private int partidasJugadas;
+
+    public List<UsuarioLogro> getLogrosDesbloqueados() {
+        return logrosDesbloqueados;
+    }
+
+    public void setLogrosDesbloqueados(List<UsuarioLogro> logrosDesbloqueados) {
+        this.logrosDesbloqueados = logrosDesbloqueados;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
 
     @JsonIgnore
     public boolean isVip() {
@@ -73,6 +131,70 @@ public class Usuario {
 
     public void setVipHasta(LocalDateTime vipHasta) {
         this.vipHasta = vipHasta;
+    }
+
+    public int getCompras() {
+        return compras;
+    }
+
+    public void setCompras(int compras) {
+        this.compras = compras;
+    }
+
+    public int getVentas() {
+        return ventas;
+    }
+
+    public void setVentas(int ventas) {
+        this.ventas = ventas;
+    }
+
+    public int getLogins() {
+        return logins;
+    }
+
+    public void setLogins(int logins) {
+        this.logins = logins;
+    }
+
+    public int getSesiones() {
+        return sesiones;
+    }
+
+    public void setSesiones(int sesiones) {
+        this.sesiones = sesiones;
+    }
+
+    public int getExperiencia() {
+        return experiencia;
+    }
+
+    public void setExperiencia(int experiencia) {
+        this.experiencia = experiencia;
+    }
+
+    public int getDiasActivo() {
+        return diasActivo;
+    }
+
+    public void setDiasActivo(int diasActivo) {
+        this.diasActivo = diasActivo;
+    }
+
+    public int getRachaLogin() {
+        return rachaLogin;
+    }
+
+    public void setRachaLogin(int rachaLogin) {
+        this.rachaLogin = rachaLogin;
+    }
+
+    public int getPartidasJugadas() {
+        return partidasJugadas;
+    }
+
+    public void setPartidasJugadas(int partidasJugadas) {
+        this.partidasJugadas = partidasJugadas;
     }
 
     public int getPuntos() {
@@ -161,6 +283,14 @@ public class Usuario {
 
     public void setAlias(String alias) {
         this.alias = alias;
+    }
+
+    public byte[] getAvatarBytes() {
+        return avatarBytes;
+    }
+
+    public void setAvatarBytes(byte[] avatarBytes) {
+        this.avatarBytes = avatarBytes;
     }
 
 }
