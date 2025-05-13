@@ -314,8 +314,29 @@ public class Usuario {
     }
 
     public void actualizarNivel() {
-        // Calcula el nivel basándose en la experiencia
-        this.nivel = (experiencia / 10) + 1; // Cada 10 puntos sube de nivel
+        int xp = this.experiencia;
+        int nivel = 1;
+        int xpNecesaria = 10;
+
+        while (xp >= xpNecesaria) {
+            xp -= xpNecesaria;
+            nivel++;
+            xpNecesaria = nivel * 10;
+        }
+
+        this.nivel = nivel;
+    }
+
+    public int getExperienciaParaSiguienteNivel() {
+        return nivel * 10;
+    }
+
+    public int getExperienciaActualNivel() {
+        int totalXp = 0;
+        for (int i = 1; i < nivel; i++) {
+            totalXp += i * 10;
+        }
+        return this.experiencia - totalXp;
     }
 
 }

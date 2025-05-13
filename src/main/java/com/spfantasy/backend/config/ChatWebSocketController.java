@@ -63,6 +63,7 @@ public class ChatWebSocketController {
 
         System.out.println("🟢 Mensaje recibido vía WebSocket: " + mensaje);
         System.out.println("📤 Enviando a canal STOMP: " + destino);
+
     }
 
 }

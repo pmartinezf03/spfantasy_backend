@@ -424,4 +424,11 @@ public class UsuarioController {
         return ResponseEntity.ok(usuario);
     }
 
+    @PostMapping("/{id}/experiencia")
+    public ResponseEntity<?> aumentarExperiencia(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
+        int puntos = body.getOrDefault("puntos", 0);
+        usuarioService.aumentarExperiencia(id, puntos); // suma los puntos y guarda
+        return ResponseEntity.ok().build();
+    }
+
 }

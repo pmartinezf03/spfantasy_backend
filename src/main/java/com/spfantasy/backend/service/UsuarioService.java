@@ -160,6 +160,7 @@ public class UsuarioService implements UserDetailsService {
 
     usuarioRepository.save(usuario);
     jugadorLigaRepository.save(jugador);
+    aumentarExperiencia(usuario.getId(), 5);
 
     // 🔥 Registrar transacción (compra directa)
     Transaccion transaccion = new Transaccion();
@@ -171,6 +172,7 @@ public class UsuarioService implements UserDetailsService {
     transaccion.setLiga(jugador.getLiga());
 
     transaccionRepository.save(transaccion);
+    aumentarExperiencia(usuario.getId(), 5);
 
     return true;
   }
@@ -205,6 +207,7 @@ public class UsuarioService implements UserDetailsService {
         transaccion.setLiga(jugadorAEliminar.getLiga());
 
         transaccionService.guardarTransaccion(transaccion);
+        aumentarExperiencia(usuario.getId(), 3);
 
         return true;
       }
@@ -259,6 +262,8 @@ public class UsuarioService implements UserDetailsService {
       usuario.setPlantilla(nuevaPlantilla);
       usuarioRepository.save(usuario);
       System.out.println("✅ Plantilla guardada para el usuario: " + username);
+      aumentarExperiencia(usuario.getId(), 2);
+
       return true;
     }
 
@@ -344,6 +349,7 @@ public class UsuarioService implements UserDetailsService {
     transaccion.setFecha(LocalDateTime.now());
 
     transaccionRepository.save(transaccion);
+    aumentarExperiencia(usuario.getId(), 3); // ← aquí
 
     return true;
   }
@@ -413,8 +419,19 @@ public class UsuarioService implements UserDetailsService {
   public Usuario actualizarNivelUsuario(Long usuarioId) {
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    usuario.actualizarNivel();
-    return usuarioRepository.save(usuario);
+
+    usuario.actualizarNivel(); // recalcula el nivel
+    return usuarioRepository.save(usuario); // guarda y lo devuelve con nivel actualizado
+  }
+
+  public void aumentarExperiencia(Long usuarioId, int puntos) {
+    Optional<Usuario> optionalUsuario = usuarioRepository.findById(usuarioId);
+    if (optionalUsuario.isPresent()) {
+      Usuario usuario = optionalUsuario.get();
+      int experienciaActual = Optional.ofNullable(usuario.getExperiencia()).orElse(0);
+      usuario.setExperiencia(experienciaActual + puntos);
+      usuarioRepository.save(usuario);
+    }
   }
 
 }
