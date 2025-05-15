@@ -10,10 +10,14 @@ import com.spfantasy.backend.repository.UsuarioRepository;
 
 import com.spfantasy.backend.util.JugadorEstadisticasCalculator;
 
+import io.jsonwebtoken.lang.Collections;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -157,6 +161,27 @@ public class JugadorService {
 
         System.out.println(
                 "✅ Estadísticas recalculadas para " + jugadores.size() + " jugadores y propagadas a jugadores_liga.");
+    }
+
+    public Map<String, Double> calcularMediasPorPosicion(String posicion) {
+        List<Jugador> jugadores = jugadorRepository.findByPosicionIgnoreCase(posicion);
+
+        if (jugadores.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        double promedioFp = jugadores.stream().mapToDouble(Jugador::getFp).average().orElse(0);
+        double promedioMin = jugadores.stream().mapToDouble(Jugador::getMin).average().orElse(0);
+        double promedioT2 = jugadores.stream().mapToDouble(Jugador::getT2).average().orElse(0);
+        double promedioT3 = jugadores.stream().mapToDouble(Jugador::getT3).average().orElse(0);
+
+        Map<String, Double> medias = new HashMap<>();
+        medias.put("fp", promedioFp);
+        medias.put("min", promedioMin);
+        medias.put("t2", promedioT2);
+        medias.put("t3", promedioT3);
+
+        return medias;
     }
 
 }

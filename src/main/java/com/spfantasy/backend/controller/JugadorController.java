@@ -1,7 +1,9 @@
 package com.spfantasy.backend.controller;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +100,22 @@ public class JugadorController {
         jugadorService.recalcularEstadisticasParaTodos();
 
         return ResponseEntity.ok("✅ Estadísticas simuladas y recalculadas correctamente.");
+    }
+
+    @GetMapping("/media/{posicion}")
+    public Map<String, Double> obtenerMediaPorPosicion(@PathVariable String posicion) {
+        List<Jugador> jugadores = jugadorRepository.findByPosicionIgnoreCase(posicion);
+        double fp = jugadores.stream().mapToDouble(Jugador::getFp).average().orElse(0);
+        double min = jugadores.stream().mapToDouble(Jugador::getMin).average().orElse(0);
+        double t2 = jugadores.stream().mapToDouble(Jugador::getT2).average().orElse(0);
+        double t3 = jugadores.stream().mapToDouble(Jugador::getT3).average().orElse(0);
+
+        Map<String, Double> media = new HashMap<>();
+        media.put("fp", fp);
+        media.put("min", min);
+        media.put("t2", t2);
+        media.put("t3", t3);
+        return media;
     }
 
 }

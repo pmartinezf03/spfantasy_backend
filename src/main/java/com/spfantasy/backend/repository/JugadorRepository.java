@@ -22,4 +22,7 @@ public interface JugadorRepository extends JpaRepository<Jugador, Long> {
     @Transactional
     @Query("UPDATE Jugador j SET j.propietario = NULL, j.disponible = true WHERE j.id = :jugadorId")
     void liberarJugador(@Param("jugadorId") Long jugadorId);
+
+    List<Jugador> findByPosicionIgnoreCase(String posicion);
+
 }
