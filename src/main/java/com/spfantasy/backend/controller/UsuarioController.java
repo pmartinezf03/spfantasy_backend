@@ -1,18 +1,11 @@
 package com.spfantasy.backend.controller;
 
 import java.math.BigDecimal;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.io.IOException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -349,16 +342,17 @@ public class UsuarioController {
         return ResponseEntity.ok(puntos);
     }
 
-    @PutMapping("/{id}/hacer-vip")
-    public ResponseEntity<Usuario> hacerVip(@PathVariable Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+@PutMapping("/{id}/hacer-vip")
+public ResponseEntity<UsuarioDTO> hacerVip(@PathVariable Long id) {
+    Usuario usuario = usuarioRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        usuario.setVipHasta(LocalDateTime.now().plusMonths(1));
-        usuarioRepository.save(usuario);
+    usuario.setVipHasta(LocalDateTime.now().plusMonths(1));
+    usuarioRepository.save(usuario);
 
-        return ResponseEntity.ok(usuario);
-    }
+    return ResponseEntity.ok(new UsuarioDTO(usuario));  // ✅ devolvemos DTO limpio
+}
+ 
 
     @PostMapping("/{id}/avatar")
     public ResponseEntity<?> subirAvatar(
