@@ -434,4 +434,11 @@ public class UsuarioService implements UserDetailsService {
     }
   }
 
+  public void marcarTutorialVisto(Long usuarioId) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    usuario.setTutorialVisto(true);
+    usuarioRepository.save(usuario);
+  }
+
 }

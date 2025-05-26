@@ -5,6 +5,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -13,6 +16,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -57,11 +61,13 @@ public class Usuario {
     @Column(name = "dinero_pendiente", nullable = false)
     private BigDecimal dineroPendiente = BigDecimal.ZERO;
 
-    @OneToMany(mappedBy = "propietario")
+    @OneToMany(mappedBy = "propietario", fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     @JsonIgnore
     private List<JugadorLiga> plantilla;
 
-    @ManyToMany(mappedBy = "usuarios")
+    @ManyToMany(mappedBy = "usuarios", fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     @JsonIgnore
     private List<GrupoChat> grupos = new ArrayList<>();
 
@@ -91,11 +97,14 @@ public class Usuario {
     private byte[] avatarData;
 
     @Lob
-    @Column(name = "avatar_bin")
+    @Column(name = "avatar_bin", columnDefinition = "LONGBLOB")
     private byte[] avatarBytes;
 
     @Column(name = "ultimo_login")
     private LocalDateTime ultimoLogin;
+
+    @Column(name = "tutorial_visto")
+    private Boolean tutorialVisto = false;
 
     public LocalDateTime getUltimoLogin() {
         return ultimoLogin;
@@ -337,6 +346,14 @@ public class Usuario {
             totalXp += i * 10;
         }
         return this.experiencia - totalXp;
+    }
+
+    public boolean isTutorialVisto() {
+        return Boolean.TRUE.equals(this.tutorialVisto);
+    }
+
+    public void setTutorialVisto(Boolean tutorialVisto) {
+        this.tutorialVisto = tutorialVisto;
     }
 
 }
