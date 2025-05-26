@@ -25,6 +25,7 @@ public class UsuarioDTO {
     private int diasActivo;
     private int rachaLogin;
     private int partidasJugadas;
+    private boolean tutorialVisto;
 
     public UsuarioDTO() {
     }
@@ -56,6 +57,7 @@ public class UsuarioDTO {
         this.diasActivo = usuario.getDiasActivo();
         this.rachaLogin = usuario.getRachaLogin();
         this.partidasJugadas = usuario.getPartidasJugadas();
+        this.tutorialVisto = usuario.isTutorialVisto();
 
     }
 
@@ -185,6 +187,14 @@ public class UsuarioDTO {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public boolean isTutorialVisto() {
+        return tutorialVisto;
+    }
+
+    public void setTutorialVisto(boolean tutorialVisto) {
+        this.tutorialVisto = tutorialVisto;
     }
 
 }

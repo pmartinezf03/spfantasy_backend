@@ -343,17 +343,16 @@ public class UsuarioController {
         return ResponseEntity.ok(puntos);
     }
 
-@PutMapping("/{id}/hacer-vip")
-public ResponseEntity<UsuarioDTO> hacerVip(@PathVariable Long id) {
-    Usuario usuario = usuarioRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    @PutMapping("/{id}/hacer-vip")
+    public ResponseEntity<UsuarioDTO> hacerVip(@PathVariable Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    usuario.setVipHasta(LocalDateTime.now().plusMonths(1));
-    usuarioRepository.save(usuario);
+        usuario.setVipHasta(LocalDateTime.now().plusMonths(1));
+        usuarioRepository.save(usuario);
 
-    return ResponseEntity.ok(new UsuarioDTO(usuario));  // ✅ devolvemos DTO limpio
-}
- 
+        return ResponseEntity.ok(new UsuarioDTO(usuario)); // ✅ devolvemos DTO limpio
+    }
 
     @PostMapping("/{id}/avatar")
     public ResponseEntity<?> subirAvatar(
@@ -422,7 +421,13 @@ public ResponseEntity<UsuarioDTO> hacerVip(@PathVariable Long id) {
     @PostMapping("/{id}/experiencia")
     public ResponseEntity<?> aumentarExperiencia(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
         int puntos = body.getOrDefault("puntos", 0);
-        usuarioService.aumentarExperiencia(id, puntos); // suma los puntos y guarda
+        usuarioService.aumentarExperiencia(id, puntos);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/tutorial/visto")
+    public ResponseEntity<?> marcarTutorialVisto(@PathVariable Long id) {
+        usuarioService.marcarTutorialVisto(id);
         return ResponseEntity.ok().build();
     }
 
