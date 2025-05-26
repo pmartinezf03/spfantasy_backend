@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.spfantasy.backend.config.JwtUtil;
+import com.spfantasy.backend.dto.CodigoRecompensaResponse;
 import com.spfantasy.backend.dto.JugadorDTO;
 import com.spfantasy.backend.dto.LoginResponseDTO;
 import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
@@ -424,5 +425,23 @@ public ResponseEntity<UsuarioDTO> hacerVip(@PathVariable Long id) {
         usuarioService.aumentarExperiencia(id, puntos); // suma los puntos y guarda
         return ResponseEntity.ok().build();
     }
+
+
+    @PostMapping("/{username}/canjear-codigo")
+public ResponseEntity<?> canjearCodigo(
+        @PathVariable String username,
+        @RequestBody Map<String, String> body) {
+
+    String codigoIngresado = body.get("codigo");
+
+    try {
+        CodigoRecompensaResponse respuesta = usuarioService.validarYAplicarCodigo(username, codigoIngresado);
+        return ResponseEntity.ok(respuesta);
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", e.getMessage()));
+    }
+}
+
 
 }

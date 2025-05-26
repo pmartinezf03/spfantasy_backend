@@ -1,5 +1,12 @@
 package com.spfantasy.backend.service;
 
+import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,6 +16,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,8 +27,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.spfantasy.backend.config.JwtUtil;
+import com.spfantasy.backend.dto.CodigoRecompensaResponse;
 import com.spfantasy.backend.dto.UsuarioDTO;
-import com.spfantasy.backend.model.Jugador;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Liga;
 import com.spfantasy.backend.model.Role;
@@ -431,6 +440,124 @@ public class UsuarioService implements UserDetailsService {
       int experienciaActual = Optional.ofNullable(usuario.getExperiencia()).orElse(0);
       usuario.setExperiencia(experienciaActual + puntos);
       usuarioRepository.save(usuario);
+    }
+  }
+
+  public CodigoRecompensaResponse validarYAplicarCodigo(String username, String codigo) {
+    CodigoRecompensaResponse respuesta = new CodigoRecompensaResponse();
+
+    String urlLogin = "http://192.168.1.141:8069/auth/";
+    String filters = "[[\"code\", \"=\", \"" + codigo + "\"], [\"used\", \"=\", false]]";
+    String filtersCodificados = URLEncoder.encode(filters, StandardCharsets.UTF_8);
+    String urlCodigos = "http://192.168.1.141:8069/api/codigo.recompensa/?filters=" + filtersCodificados;
+
+    try {
+      HttpClient client = HttpClient.newHttpClient();
+
+      String loginJson = """
+          {
+            "params": {
+              "login": "odoo@gmail.com",
+              "password": "1234aA",
+              "db": "odoo_db"
+            }
+          }
+          """;
+
+      HttpRequest loginRequest = HttpRequest.newBuilder()
+          .uri(URI.create(urlLogin))
+          .header("Content-Type", "application/json")
+          .POST(HttpRequest.BodyPublishers.ofString(loginJson))
+          .build();
+
+      HttpResponse<String> loginResponse = client.send(loginRequest, HttpResponse.BodyHandlers.ofString());
+      String cookie = loginResponse.headers().firstValue("Set-Cookie").orElseThrow();
+
+      HttpRequest codigosRequest = HttpRequest.newBuilder()
+          .uri(URI.create(urlCodigos))
+          .header("Cookie", cookie)
+          .build();
+
+      HttpResponse<String> codigosResponse = client.send(codigosRequest, HttpResponse.BodyHandlers.ofString());
+      JSONObject json = new JSONObject(codigosResponse.body());
+      System.out.println("🔍 Respuesta de Odoo para código: " + json.toString(2));
+
+      // Obtener resultados del JSON de Odoo
+      JSONArray resultados = json.getJSONArray("result");
+
+      // Buscar el código exacto en los resultados
+      JSONObject codeInfo = null;
+      for (int i = 0; i < resultados.length(); i++) {
+        JSONObject item = resultados.getJSONObject(i);
+        if (codigo.equalsIgnoreCase(item.getString("code"))) {
+          codeInfo = item;
+          break;
+        }
+      }
+
+      if (codeInfo == null) {
+        respuesta.setValido(false);
+        respuesta.setMensaje("❌ Código no válido.");
+        return respuesta;
+      }
+
+      if (codeInfo.getBoolean("used")) {
+        respuesta.setValido(false);
+        respuesta.setMensaje("⚠️ Código ya fue usado.");
+        return respuesta;
+      }
+
+      String tipo = codeInfo.getString("reward_type");
+      String valor = codeInfo.getString("reward_value");
+
+      Usuario usuario = obtenerUsuarioPorUsername(username);
+      if (usuario == null)
+        throw new RuntimeException("Usuario no encontrado");
+
+      switch (tipo) {
+        case "vip":
+          usuario.setVipHasta(LocalDateTime.now().plusMonths(1));
+          respuesta.setMensaje("✅ ¡Acceso VIP activado por 1 mes!");
+          break;
+        case "coins":
+          usuario.setDinero(usuario.getDinero().add(new BigDecimal(valor)));
+          respuesta.setMensaje("✅ ¡Has recibido " + valor + " monedas!");
+          break;
+        default:
+          respuesta.setMensaje("⚠️ Recompensa no reconocida.");
+      }
+
+      usuarioRepository.save(usuario);
+
+      // Marcar como usado
+      int id = codeInfo.getInt("id");
+      String markUsedJson = """
+          {
+            "params": {
+              "data": {
+                "used": true
+              }
+            }
+          }
+          """;
+
+      HttpRequest putRequest = HttpRequest.newBuilder()
+          .uri(URI.create("http://192.168.1.141:8069/api/codigo.recompensa/" + id + "/"))
+          .header("Content-Type", "application/json")
+          .header("Cookie", cookie)
+          .PUT(HttpRequest.BodyPublishers.ofString(markUsedJson))
+          .build();
+
+      client.send(putRequest, HttpResponse.BodyHandlers.ofString());
+
+      respuesta.setValido(true);
+      respuesta.setTipo(tipo);
+      respuesta.setValor(valor);
+
+      return respuesta;
+
+    } catch (Exception e) {
+      throw new RuntimeException("Error validando el código: " + e.getMessage());
     }
   }
 
