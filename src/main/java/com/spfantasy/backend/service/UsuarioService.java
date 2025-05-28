@@ -443,7 +443,6 @@ public class UsuarioService implements UserDetailsService {
     }
   }
 
-<<<<<<< HEAD
   public CodigoRecompensaResponse validarYAplicarCodigo(String username, String codigo) {
     CodigoRecompensaResponse respuesta = new CodigoRecompensaResponse();
 
@@ -560,13 +559,13 @@ public class UsuarioService implements UserDetailsService {
     } catch (Exception e) {
       throw new RuntimeException("Error validando el código: " + e.getMessage());
     }
-=======
+  }
+
   public void marcarTutorialVisto(Long usuarioId) {
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     usuario.setTutorialVisto(true);
     usuarioRepository.save(usuario);
->>>>>>> 8d53b16165e726db976a7452ed756e60c13b8c01
   }
 
 }

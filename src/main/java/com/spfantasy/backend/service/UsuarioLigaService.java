@@ -24,7 +24,7 @@ public class UsuarioLigaService {
         return usuariosLiga.stream()
                 .map(ul -> {
                     Usuario u = ul.getUsuario();
-                    return new MiembroLigaDTO(u.getId(), u.getUsername(), u.getEmail());
+                    return new MiembroLigaDTO(u.getId(), u.getUsername(), u.getEmail(), u.getUltimoLogin());
                 })
                 .collect(Collectors.toList());
     }

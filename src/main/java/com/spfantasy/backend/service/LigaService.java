@@ -26,6 +26,8 @@ import com.spfantasy.backend.repository.UsuarioLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 
 import jakarta.transaction.Transactional;
+import com.spfantasy.backend.dto.ActividadLigaDTO;
+
 import com.spfantasy.backend.model.ActividadLiga;
 import com.spfantasy.backend.repository.ActividadLigaRepository;
 
@@ -53,8 +55,11 @@ public class LigaService {
     @Autowired
     private ActividadLigaRepository actividadLigaRepository;
 
-    public List<ActividadLiga> obtenerActividadReciente(Long ligaId) {
-        return actividadLigaRepository.findTop10ByLigaIdOrderByTimestampDesc(ligaId);
+    public List<ActividadLigaDTO> obtenerActividadReciente(Long ligaId) {
+        List<ActividadLiga> actividades = actividadLigaRepository.findTop10ByLigaIdOrderByTimestampDesc(ligaId);
+        return actividades.stream()
+                .map(ActividadLigaDTO::new)
+                .toList();
     }
 
     @Transactional
@@ -167,7 +172,7 @@ public class LigaService {
         return relaciones.stream()
                 .map(ul -> {
                     Usuario u = ul.getUsuario();
-                    return new MiembroLigaDTO(u.getId(), u.getUsername(), u.getEmail());
+                    return new MiembroLigaDTO(u.getId(), u.getUsername(), u.getEmail(), u.getUltimoLogin());
                 })
                 .toList();
     }
