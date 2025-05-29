@@ -28,6 +28,8 @@ import org.springframework.stereotype.Service;
 
 import com.spfantasy.backend.config.JwtUtil;
 import com.spfantasy.backend.dto.CodigoRecompensaResponse;
+import com.spfantasy.backend.dto.JugadorDTO;
+import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 import com.spfantasy.backend.dto.UsuarioDTO;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Liga;
@@ -61,6 +63,9 @@ public class UsuarioService implements UserDetailsService {
   private JugadorLigaRepository jugadorLigaRepository;
 
   @Autowired
+  private JugadorLigaService jugadorLigaService;
+
+  @Autowired
   private TransaccionService transaccionService;
 
   @Autowired
@@ -76,6 +81,8 @@ public class UsuarioService implements UserDetailsService {
   public Usuario registrarUsuario(Usuario usuario) {
     usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
     usuario.setRole(Role.usuario);
+    usuario.setNivel(1);
+    usuario.setExperiencia(0);
     return usuarioRepository.save(usuario);
   }
 
@@ -425,24 +432,6 @@ public class UsuarioService implements UserDetailsService {
     usuarioRepository.save(usuario);
   }
 
-  public Usuario actualizarNivelUsuario(Long usuarioId) {
-    Usuario usuario = usuarioRepository.findById(usuarioId)
-        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-    usuario.actualizarNivel(); // recalcula el nivel
-    return usuarioRepository.save(usuario); // guarda y lo devuelve con nivel actualizado
-  }
-
-  public void aumentarExperiencia(Long usuarioId, int puntos) {
-    Optional<Usuario> optionalUsuario = usuarioRepository.findById(usuarioId);
-    if (optionalUsuario.isPresent()) {
-      Usuario usuario = optionalUsuario.get();
-      int experienciaActual = Optional.ofNullable(usuario.getExperiencia()).orElse(0);
-      usuario.setExperiencia(experienciaActual + puntos);
-      usuarioRepository.save(usuario);
-    }
-  }
-
   public CodigoRecompensaResponse validarYAplicarCodigo(String username, String codigo) {
     CodigoRecompensaResponse respuesta = new CodigoRecompensaResponse();
 
@@ -566,6 +555,82 @@ public class UsuarioService implements UserDetailsService {
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     usuario.setTutorialVisto(true);
     usuarioRepository.save(usuario);
+  }
+
+  public Usuario actualizarNivelUsuario(Long usuarioId) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    usuario.actualizarNivel();
+    return usuarioRepository.save(usuario);
+  }
+
+  public int obtenerNivel(Long usuarioId) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    return usuario.calcularNivel();
+  }
+
+  public int obtenerExperiencia(Long usuarioId) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    return Optional.ofNullable(usuario.getExperiencia()).orElse(0);
+  }
+
+  public Usuario aumentarExperiencia(Long usuarioId, int puntos) {
+    Usuario usuario = usuarioRepository.findById(usuarioId)
+        .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    int expActual = Optional.ofNullable(usuario.getExperiencia()).orElse(0);
+    usuario.setExperiencia(expActual + puntos);
+    usuario.actualizarNivel(); // actualizar nivel según experiencia nueva
+    return usuarioRepository.save(usuario);
+  }
+
+  public List<String> generarConsejosCoach(String username) {
+    Usuario usuario = obtenerUsuarioPorUsername(username);
+    List<String> consejos = new ArrayList<>();
+
+    if (usuario == null || usuario.getPlantilla() == null) {
+      consejos.add("❌ No se pudo cargar tu plantilla.");
+      return consejos;
+    }
+
+    List<JugadorLiga> plantilla = usuario.getPlantilla();
+    List<JugadorLiga> titulares = plantilla.stream()
+        .filter(JugadorLiga::isEsTitular)
+        .toList();
+
+    List<JugadorLiga> suplentes = plantilla.stream()
+        .filter(j -> !j.isEsTitular())
+        .toList();
+
+    // Dinero
+    if (usuario.getDinero().compareTo(new BigDecimal("5000000")) > 0) {
+      consejos.add("💰 Tienes más de 5 millones sin gastar. ¡Aprovecha el mercado!");
+    }
+
+    // Plantilla incompleta
+    if (titulares.size() < 5) {
+      consejos.add("📋 Tienes menos de 5 titulares. Alinea un equipo completo para puntuar.");
+    }
+
+    // Suplentes excesivos
+    if (suplentes.size() > 5) {
+      consejos.add("🔁 Tienes demasiados suplentes. Considera vender alguno para fichar mejores titulares.");
+    }
+
+    // VIP
+    if (usuario.getRole().name().equalsIgnoreCase("VIP")) {
+      consejos.add("🏆 Eres VIP. Recuerda usar el análisis exclusivo del scouting.");
+    }
+
+    // Bajo rendimiento
+    boolean algunoConBajaMedia = titulares.stream()
+        .anyMatch(j -> j.getFp() != null && j.getFp() < 10);
+    if (algunoConBajaMedia) {
+      consejos.add("⚠️ Algunos titulares tienen bajo rendimiento. Mira sus estadísticas y considera cambios.");
+    }
+
+    return consejos;
   }
 
 }

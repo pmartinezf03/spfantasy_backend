@@ -96,7 +96,7 @@ public class UsuarioController {
             if (exito) {
                 response.put("mensaje", "Jugador vendido correctamente.");
                 response.put("status", "success");
-                return ResponseEntity.ok(response); // <-- ESTO ahora se serializa como JSON ✔️
+                return ResponseEntity.ok(response);
             } else {
                 response.put("mensaje", "❌ No se pudo vender el jugador.");
                 response.put("status", "error");
@@ -290,7 +290,10 @@ public class UsuarioController {
     public ResponseEntity<UsuarioDTO> obtenerUsuarioPorId(@PathVariable Long id) {
         Usuario usuario = usuarioService.obtenerUsuarioPorId(id);
         if (usuario != null) {
-            return ResponseEntity.ok(new UsuarioDTO(usuario));
+            UsuarioDTO dto = new UsuarioDTO(usuario);
+            // Aquí calculamos el nivel dinámicamente si no está almacenado
+            dto.setNivel(usuario.getNivel()); // Si getNivel() lo calcula dinámicamente o lo tienes guardado
+            return ResponseEntity.ok(dto);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -412,17 +415,31 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{id}/experiencia")
+    public ResponseEntity<UsuarioDTO> aumentarExperiencia(@PathVariable Long id,
+            @RequestBody Map<String, Integer> body) {
+        int puntos = body.getOrDefault("puntos", 0);
+        Usuario usuarioActualizado = usuarioService.aumentarExperiencia(id, puntos);
+        UsuarioDTO dto = new UsuarioDTO(usuarioActualizado);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/{id}/nivel")
+    public ResponseEntity<Integer> obtenerNivelUsuario(@PathVariable Long id) {
+        int nivel = usuarioService.obtenerNivel(id);
+        return ResponseEntity.ok(nivel);
+    }
+
+    @GetMapping("/{id}/experiencia")
+    public ResponseEntity<Integer> obtenerExperienciaUsuario(@PathVariable Long id) {
+        int experiencia = usuarioService.obtenerExperiencia(id);
+        return ResponseEntity.ok(experiencia);
+    }
+
     @PutMapping("/{id}/nivel")
     public ResponseEntity<Usuario> actualizarNivel(@PathVariable Long id) {
         Usuario usuario = usuarioService.actualizarNivelUsuario(id);
         return ResponseEntity.ok(usuario);
-    }
-
-    @PostMapping("/{id}/experiencia")
-    public ResponseEntity<?> aumentarExperiencia(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
-        int puntos = body.getOrDefault("puntos", 0);
-        usuarioService.aumentarExperiencia(id, puntos);
-        return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/tutorial/visto")
@@ -431,22 +448,26 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
-
     @PostMapping("/{username}/canjear-codigo")
-public ResponseEntity<?> canjearCodigo(
-        @PathVariable String username,
-        @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> canjearCodigo(
+            @PathVariable String username,
+            @RequestBody Map<String, String> body) {
 
-    String codigoIngresado = body.get("codigo");
+        String codigoIngresado = body.get("codigo");
 
-    try {
-        CodigoRecompensaResponse respuesta = usuarioService.validarYAplicarCodigo(username, codigoIngresado);
-        return ResponseEntity.ok(respuesta);
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("error", e.getMessage()));
+        try {
+            CodigoRecompensaResponse respuesta = usuarioService.validarYAplicarCodigo(username, codigoIngresado);
+            return ResponseEntity.ok(respuesta);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
-}
 
+    @GetMapping("/{username}/consejos")
+    public ResponseEntity<List<String>> obtenerConsejosCoach(@PathVariable String username) {
+        List<String> consejos = usuarioService.generarConsejosCoach(username);
+        return ResponseEntity.ok(consejos);
+    }
 
 }

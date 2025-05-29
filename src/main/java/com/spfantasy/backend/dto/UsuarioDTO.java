@@ -27,6 +27,16 @@ public class UsuarioDTO {
     private int partidasJugadas;
     private boolean tutorialVisto;
 
+    public int getNivel() {
+        return nivel;
+    }
+
+    public void setNivel(int nivel) {
+        this.nivel = nivel;
+    }
+
+    private int nivel;
+
     public UsuarioDTO() {
     }
 
@@ -58,7 +68,7 @@ public class UsuarioDTO {
         this.rachaLogin = usuario.getRachaLogin();
         this.partidasJugadas = usuario.getPartidasJugadas();
         this.tutorialVisto = usuario.isTutorialVisto();
-
+        this.nivel = usuario.getNivel();
     }
 
     public int getCompras() {
