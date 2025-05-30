@@ -3,6 +3,7 @@ package com.spfantasy.backend.model;
 
 import java.sql.Timestamp;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -28,6 +29,17 @@ public class UsuarioLiga {
     @ManyToOne
     @JoinColumn(name = "liga_id", nullable = false)
     private Liga liga;
+
+    @Column(name = "sobres_mostrados")
+    private Boolean sobresMostrados = false;
+
+    public Boolean isSobresMostrados() {
+        return sobresMostrados;
+    }
+
+    public void setSobresMostrados(Boolean sobresMostrados) {
+        this.sobresMostrados = sobresMostrados;
+    }
 
     private Timestamp fechaUnion = new Timestamp(System.currentTimeMillis());
 

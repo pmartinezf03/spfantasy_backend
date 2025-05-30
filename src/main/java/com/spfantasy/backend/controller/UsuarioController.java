@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.spfantasy.backend.config.JwtUtil;
 import com.spfantasy.backend.dto.CodigoRecompensaResponse;
 import com.spfantasy.backend.dto.JugadorDTO;
+import com.spfantasy.backend.dto.JugadorLigaDTO;
 import com.spfantasy.backend.dto.LoginResponseDTO;
 import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 import com.spfantasy.backend.dto.UsuarioDTO;
@@ -32,6 +33,7 @@ import com.spfantasy.backend.model.Role;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.repository.JugadorLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
+import com.spfantasy.backend.service.UsuarioLigaService;
 import com.spfantasy.backend.service.UsuarioService;
 
 @RestController
@@ -40,6 +42,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private UsuarioLigaService usuarioLigaService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -468,6 +473,41 @@ public class UsuarioController {
     public ResponseEntity<List<String>> obtenerConsejosCoach(@PathVariable String username) {
         List<String> consejos = usuarioService.generarConsejosCoach(username);
         return ResponseEntity.ok(consejos);
+    }
+
+    @GetMapping("/{id}/sobres-bienvenida")
+    public ResponseEntity<List<JugadorLigaDTO>> getSobresBienvenida(@PathVariable Long id) {
+        List<JugadorLiga> jugadores = usuarioLigaService.obtenerJugadoresRepartidosHoy(id);
+
+        if (jugadores.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // o 403
+        }
+
+        List<JugadorLigaDTO> sobres = jugadores.stream()
+                .map(JugadorLigaDTO::new)
+                .toList();
+
+        return ResponseEntity.ok(sobres);
+    }
+
+    @PutMapping("/{usuarioId}/ligas/{ligaId}/marcar-sobres-mostrados")
+    public ResponseEntity<Void> marcarSobresMostrados(@PathVariable Long usuarioId, @PathVariable Long ligaId) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
+        if (usuarioOpt.isEmpty()) {
+            System.out.println("❌ Usuario no encontrado");
+            return ResponseEntity.notFound().build();
+        }
+
+        Usuario usuario = usuarioOpt.get();
+        System.out.println("📡 Marcando sobres como mostrados para usuario ID: " + usuarioId);
+
+        // Actualizamos la propiedad haVistoSobres
+        usuario.setHaVistoSobres(true);
+        usuarioRepository.save(usuario);
+
+        System.out.println("✅ Estado de haVistoSobres después de actualizar: " + usuario.getHaVistoSobres());
+
+        return ResponseEntity.ok().build();
     }
 
 }

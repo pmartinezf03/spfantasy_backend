@@ -100,11 +100,38 @@ public class Usuario {
     @Column(name = "avatar_bin", columnDefinition = "LONGBLOB")
     private byte[] avatarBytes;
 
+    public Boolean getTutorialVisto() {
+        return tutorialVisto;
+    }
+
+    public Integer getPreguntasIaUsadas() {
+        return preguntasIaUsadas != null ? preguntasIaUsadas : 0;
+    }
+
+    public void setPreguntasIaUsadas(Integer preguntasIaUsadas) {
+        this.preguntasIaUsadas = preguntasIaUsadas != null ? preguntasIaUsadas : 0;
+    }
+
     @Column(name = "ultimo_login")
     private LocalDateTime ultimoLogin;
 
     @Column(name = "tutorial_visto")
     private Boolean tutorialVisto = false;
+
+    // Usuario.java
+    @Column(name = "preguntas_ia_usadas")
+    private Integer preguntasIaUsadas = 0;
+
+    @Column(name = "ha_visto_sobres")
+    private Boolean haVistoSobres = false;
+
+    public Boolean getHaVistoSobres() {
+        return haVistoSobres;
+    }
+
+    public void setHaVistoSobres(Boolean haVistoSobres) {
+        this.haVistoSobres = haVistoSobres;
+    }
 
     public LocalDateTime getUltimoLogin() {
         return ultimoLogin;

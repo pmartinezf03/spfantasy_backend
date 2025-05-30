@@ -26,6 +26,15 @@ public class UsuarioDTO {
     private int rachaLogin;
     private int partidasJugadas;
     private boolean tutorialVisto;
+    private Boolean haVistoSobres;
+
+    public Boolean getHaVistoSobres() {
+        return haVistoSobres;
+    }
+
+    public void setHaVistoSobres(Boolean haVistoSobres) {
+        this.haVistoSobres = haVistoSobres;
+    }
 
     public int getNivel() {
         return nivel;
@@ -69,6 +78,7 @@ public class UsuarioDTO {
         this.partidasJugadas = usuario.getPartidasJugadas();
         this.tutorialVisto = usuario.isTutorialVisto();
         this.nivel = usuario.getNivel();
+        this.haVistoSobres = usuario.getHaVistoSobres(); // ✅ ESTA LÍNEA
     }
 
     public int getCompras() {
