@@ -32,15 +32,14 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/api/codigos/**", // ✅ PERMITIR esto
                                 "/api/usuarios/login",
                                 "/api/usuarios/registro",
                                 "/api/usuarios/*/avatar")
                         .permitAll()
-                        .requestMatchers(
-                                "/api/**" // ✅ Proteger todas las rutas API, incluyendo /api/logros/**
-                        ).authenticated()
-                        .anyRequest().permitAll() // permite assets, index.html, etc.
-                )
+                        .requestMatchers("/api/**").authenticated() // 🔒 Proteger lo demás
+                        .anyRequest().permitAll())
+
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -52,7 +51,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost",
                 "http://localhost:4200",
-                "http://100.24.45.15"));
+                "http://100.24.45.15",
+                "/api/codigos/**"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
