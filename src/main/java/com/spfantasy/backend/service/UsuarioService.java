@@ -560,14 +560,16 @@ public class UsuarioService implements UserDetailsService {
   public Usuario actualizarNivelUsuario(Long usuarioId) {
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    usuario.actualizarNivel();
+
+    int nuevoNivel = calcularNivelDesdeExperiencia(usuario.getExperiencia());
+    usuario.setNivel(nuevoNivel);
     return usuarioRepository.save(usuario);
   }
 
   public int obtenerNivel(Long usuarioId) {
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    return usuario.calcularNivel();
+    return usuario.getNivel();
   }
 
   public int obtenerExperiencia(Long usuarioId) {
@@ -579,9 +581,17 @@ public class UsuarioService implements UserDetailsService {
   public Usuario aumentarExperiencia(Long usuarioId, int puntos) {
     Usuario usuario = usuarioRepository.findById(usuarioId)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    int expActual = Optional.ofNullable(usuario.getExperiencia()).orElse(0);
-    usuario.setExperiencia(expActual + puntos);
-    usuario.actualizarNivel(); // actualizar nivel según experiencia nueva
+
+    int expAnterior = Optional.ofNullable(usuario.getExperiencia()).orElse(0);
+    int nuevaXP = expAnterior + puntos;
+    usuario.setExperiencia(nuevaXP);
+
+    int nivelCalculado = calcularNivelDesdeExperiencia(nuevaXP);
+    if (nivelCalculado > usuario.getNivel()) {
+      System.out.println("🎉 Usuario ha subido de nivel: " + usuario.getNivel() + " → " + nivelCalculado);
+    }
+    usuario.setNivel(nivelCalculado);
+
     return usuarioRepository.save(usuario);
   }
 
@@ -631,6 +641,18 @@ public class UsuarioService implements UserDetailsService {
     }
 
     return consejos;
+  }
+
+  public int calcularNivelDesdeExperiencia(int experiencia) {
+    int nivel = 1;
+    int xpAcumulada = 0;
+
+    while (experiencia >= xpAcumulada + (nivel * 10)) {
+      xpAcumulada += nivel * 10;
+      nivel++;
+    }
+
+    return nivel;
   }
 
 }

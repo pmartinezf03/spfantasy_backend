@@ -369,38 +369,4 @@ public class Usuario {
         this.tutorialVisto = tutorialVisto;
     }
 
-    public int calcularNivel() {
-        int nivel = 1;
-        int experienciaAcumulada = 0;
-
-        while (nivel < 50) { // max 50 niveles
-            int experienciaParaNivel = nivel * 10;
-            if (this.experiencia < experienciaAcumulada + experienciaParaNivel) {
-                break;
-            }
-            experienciaAcumulada += experienciaParaNivel;
-            nivel++;
-        }
-        return nivel;
-    }
-
-    public int experienciaParaSiguienteNivel() {
-        int nivelActual = calcularNivel();
-        return nivelActual * 10;
-    }
-
-    public int experienciaRestanteParaSubir() {
-        int nivelActual = calcularNivel();
-        int experienciaAcumulada = 0;
-        for (int i = 1; i < nivelActual; i++) {
-            experienciaAcumulada += i * 10;
-        }
-        return (experienciaAcumulada + (nivelActual * 10)) - this.experiencia;
-    }
-
-    // Opcional: método para actualizar el nivel en la entidad
-    public void actualizarNivel() {
-        this.nivel = calcularNivel();
-    }
-
 }

@@ -28,6 +28,7 @@ import com.spfantasy.backend.dto.JugadorLigaDTO;
 import com.spfantasy.backend.dto.LoginResponseDTO;
 import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 import com.spfantasy.backend.dto.UsuarioDTO;
+import com.spfantasy.backend.dto.UsuarioNivelDTO;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Role;
 import com.spfantasy.backend.model.Usuario;
@@ -508,6 +509,13 @@ public class UsuarioController {
         System.out.println("✅ Estado de haVistoSobres después de actualizar: " + usuario.getHaVistoSobres());
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/nivel-detallado")
+    public ResponseEntity<UsuarioNivelDTO> obtenerNivelDetallado(@PathVariable Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return ResponseEntity.ok(new UsuarioNivelDTO(usuario));
     }
 
 }
