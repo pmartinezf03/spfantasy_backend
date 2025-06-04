@@ -2,7 +2,7 @@ package com.spfantasy.backend.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Base64;
+import java.util.List;
 
 import com.spfantasy.backend.model.Usuario;
 
@@ -27,6 +27,7 @@ public class UsuarioDTO {
     private int partidasJugadas;
     private boolean tutorialVisto;
     private Boolean haVistoSobres;
+    private List<Integer> rachasFelicitadas;
 
     public Boolean getHaVistoSobres() {
         return haVistoSobres;
@@ -78,7 +79,8 @@ public class UsuarioDTO {
         this.partidasJugadas = usuario.getPartidasJugadas();
         this.tutorialVisto = usuario.isTutorialVisto();
         this.nivel = usuario.getNivel();
-        this.haVistoSobres = usuario.getHaVistoSobres(); // ✅ ESTA LÍNEA
+        this.haVistoSobres = usuario.getHaVistoSobres();
+        this.rachasFelicitadas = usuario.getRachasFelicitadas();
     }
 
     public int getCompras() {
@@ -215,6 +217,14 @@ public class UsuarioDTO {
 
     public void setTutorialVisto(boolean tutorialVisto) {
         this.tutorialVisto = tutorialVisto;
+    }
+
+    public List<Integer> getRachasFelicitadas() {
+        return rachasFelicitadas;
+    }
+
+    public void setRachasFelicitadas(List<Integer> rachasFelicitadas) {
+        this.rachasFelicitadas = rachasFelicitadas;
     }
 
 }

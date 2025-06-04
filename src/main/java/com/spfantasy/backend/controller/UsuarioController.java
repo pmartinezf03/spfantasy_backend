@@ -2,6 +2,7 @@ package com.spfantasy.backend.controller;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,9 @@ public class UsuarioController {
                     user.getRole().name(),
                     token);
 
+            // ✅ Añade esta línea:
+            loginResponse.setRachasFelicitadas(user.getRachasFelicitadas());
+
             Map<String, Object> response = new HashMap<>();
             response.put("user", loginResponse);
             response.put("token", token);
@@ -86,7 +90,6 @@ public class UsuarioController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Credenciales incorrectas");
         }
-
     }
 
     @PostMapping("/{username}/vender-jugador-liga/{jugadorLigaId}")
@@ -516,6 +519,60 @@ public class UsuarioController {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         return ResponseEntity.ok(new UsuarioNivelDTO(usuario));
+    }
+
+    @PutMapping("/{id}/felicitacion-nivel")
+    public ResponseEntity<Void> registrarNivelFelicitado(@PathVariable Long id, @RequestParam int nivel) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        // Primero, actualiza el nivel real en base a la experiencia
+        usuario = usuarioService.actualizarNivelUsuario(id);
+
+        // Luego, verifica si corresponde actualizar el nivel felicitado
+        if (usuario.getNivelFelicitado() == null || usuario.getNivelFelicitado() < usuario.getNivel()) {
+            usuario.setNivelFelicitado(usuario.getNivel());
+            usuarioRepository.save(usuario);
+
+            System.out.println("✅ Usuario felicitado por nivel: " + usuario.getNivel());
+        } else {
+            System.out.println("⚠️ Nivel ya felicitado anteriormente: " + usuario.getNivelFelicitado());
+        }
+
+        System.out.println("🧠 Nivel actual: " + usuario.getNivel() +
+                " | Felicitado: " + usuario.getNivelFelicitado() +
+                " | XP total: " + usuario.getExperiencia());
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/racha-felicitada")
+    public ResponseEntity<Void> registrarRachaFelicitada(@PathVariable Long id, @RequestParam int racha) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (usuario.getRachasFelicitadas() == null) {
+            usuario.setRachasFelicitadas(new ArrayList<>());
+        }
+
+        if (!usuario.getRachasFelicitadas().contains(racha)) {
+            usuario.getRachasFelicitadas().add(racha);
+            usuarioRepository.save(usuario);
+            System.out.println("✅ Racha " + racha + " registrada para usuario ID " + id);
+        } else {
+            System.out.println("⚠️ Racha " + racha + " ya estaba registrada");
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/sumar-experiencia")
+    public ResponseEntity<UsuarioDTO> sumarExperiencia(
+            @PathVariable Long id,
+            @RequestParam int puntos) {
+
+        Usuario usuarioActualizado = usuarioService.aumentarExperiencia(id, puntos);
+        return ResponseEntity.ok(new UsuarioDTO(usuarioActualizado));
     }
 
 }

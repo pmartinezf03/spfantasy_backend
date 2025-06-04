@@ -1,6 +1,7 @@
 package com.spfantasy.backend.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -71,6 +73,28 @@ public class Usuario {
     @JsonIgnore
     private List<GrupoChat> grupos = new ArrayList<>();
 
+    @Column(name = "nivel_felicitado")
+    private Integer nivelFelicitado;
+
+    @Column(name = "fecha_felicitacion_racha")
+    private LocalDate fechaFelicitacionRacha;
+
+    public Integer getNivelFelicitado() {
+        return nivelFelicitado;
+    }
+
+    public void setNivelFelicitado(Integer nivelFelicitado) {
+        this.nivelFelicitado = nivelFelicitado;
+    }
+
+    public LocalDate getFechaFelicitacionRacha() {
+        return fechaFelicitacionRacha;
+    }
+
+    public void setFechaFelicitacionRacha(LocalDate fechaFelicitacionRacha) {
+        this.fechaFelicitacionRacha = fechaFelicitacionRacha;
+    }
+
     public byte[] getAvatarData() {
         return avatarData;
     }
@@ -125,6 +149,10 @@ public class Usuario {
     @Column(name = "ha_visto_sobres")
     private Boolean haVistoSobres = false;
 
+    @ElementCollection
+    @Column(name = "rachas_felicitadas")
+    private List<Integer> rachasFelicitadas = new ArrayList<>();
+
     public Boolean getHaVistoSobres() {
         return haVistoSobres;
     }
@@ -139,6 +167,14 @@ public class Usuario {
 
     public void setUltimoLogin(LocalDateTime ultimoLogin) {
         this.ultimoLogin = ultimoLogin;
+    }
+
+    public List<Integer> getRachasFelicitadas() {
+        return rachasFelicitadas;
+    }
+
+    public void setRachasFelicitadas(List<Integer> rachasFelicitadas) {
+        this.rachasFelicitadas = rachasFelicitadas;
     }
 
     private int compras;

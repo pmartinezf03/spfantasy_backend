@@ -435,10 +435,10 @@ public class UsuarioService implements UserDetailsService {
   public CodigoRecompensaResponse validarYAplicarCodigo(String username, String codigo) {
     CodigoRecompensaResponse respuesta = new CodigoRecompensaResponse();
 
-    String urlLogin = "http://192.168.1.141:8069/auth/";
+    String urlLogin = "http://52.54.248.252:8069/auth/";
     String filters = "[[\"code\", \"=\", \"" + codigo + "\"], [\"used\", \"=\", false]]";
     String filtersCodificados = URLEncoder.encode(filters, StandardCharsets.UTF_8);
-    String urlCodigos = "http://192.168.1.141:8069/api/codigo.recompensa/?filters=" + filtersCodificados;
+    String urlCodigos = "http://52.54.248.252:8069/api/codigo.recompensa/?filters=" + filtersCodificados;
 
     try {
       HttpClient client = HttpClient.newHttpClient();
@@ -447,8 +447,8 @@ public class UsuarioService implements UserDetailsService {
           {
             "params": {
               "login": "odoo@gmail.com",
-              "password": "1234aA",
-              "db": "odoo_db"
+              "password": "admin123",
+              "db": "fantasybasket"
             }
           }
           """;
@@ -531,7 +531,7 @@ public class UsuarioService implements UserDetailsService {
           """;
 
       HttpRequest putRequest = HttpRequest.newBuilder()
-          .uri(URI.create("http://192.168.1.141:8069/api/codigo.recompensa/" + id + "/"))
+          .uri(URI.create("http://52.54.248.252:8069/api/codigo.recompensa/" + id + "/"))
           .header("Content-Type", "application/json")
           .header("Cookie", cookie)
           .PUT(HttpRequest.BodyPublishers.ofString(markUsedJson))
@@ -557,13 +557,43 @@ public class UsuarioService implements UserDetailsService {
     usuarioRepository.save(usuario);
   }
 
-  public Usuario actualizarNivelUsuario(Long usuarioId) {
-    Usuario usuario = usuarioRepository.findById(usuarioId)
+  public Usuario actualizarNivelUsuario(Long id) {
+    Usuario usuario = usuarioRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    int nuevoNivel = calcularNivelDesdeExperiencia(usuario.getExperiencia());
+    int experiencia = usuario.getExperiencia();
+    int nivelActual = 1;
+    int xpAcumulada = 0;
+
+    // 🧠 Calculamos a qué nivel corresponde la experiencia actual
+    while (experiencia >= xpAcumulada + (nivelActual * 10)) {
+      xpAcumulada += nivelActual * 10;
+      nivelActual++;
+    }
+
+    if (nivelActual != usuario.getNivel()) {
+      System.out.println("🆙 Subiendo nivel del usuario de " + usuario.getNivel() + " a " + nivelActual);
+      usuario.setNivel(nivelActual);
+      usuarioRepository.save(usuario);
+    } else {
+      System.out.println("⚠️ Usuario ya está en su nivel correspondiente: " + nivelActual);
+    }
+
+    return usuario;
+  }
+
+  public Usuario actualizarNivelDesdeExperiencia(Usuario usuario) {
+    int xp = usuario.getExperiencia();
+    int nuevoNivel = 1;
+    int xpAcumulada = 0;
+
+    while (xp >= xpAcumulada + nuevoNivel * 10) {
+      xpAcumulada += nuevoNivel * 10;
+      nuevoNivel++;
+    }
+
     usuario.setNivel(nuevoNivel);
-    return usuarioRepository.save(usuario);
+    return usuario;
   }
 
   public int obtenerNivel(Long usuarioId) {
@@ -586,13 +616,21 @@ public class UsuarioService implements UserDetailsService {
     int nuevaXP = expAnterior + puntos;
     usuario.setExperiencia(nuevaXP);
 
+    int nivelAnterior = usuario.getNivel();
     int nivelCalculado = calcularNivelDesdeExperiencia(nuevaXP);
-    if (nivelCalculado > usuario.getNivel()) {
-      System.out.println("🎉 Usuario ha subido de nivel: " + usuario.getNivel() + " → " + nivelCalculado);
+
+    if (nivelCalculado > nivelAnterior) {
+      System.out.println("🎉 ¡Usuario ha subido de nivel! " + nivelAnterior + " → " + nivelCalculado);
+    } else {
+      System.out.println("🧪 Usuario no sube de nivel. Nivel actual: " + nivelAnterior + " | XP total: " + nuevaXP);
     }
+
     usuario.setNivel(nivelCalculado);
 
-    return usuarioRepository.save(usuario);
+    Usuario guardado = usuarioRepository.save(usuario);
+    System.out.println("✅ Usuario actualizado. Nivel: " + guardado.getNivel() + ", XP: " + guardado.getExperiencia());
+
+    return guardado;
   }
 
   public List<String> generarConsejosCoach(String username) {
@@ -647,11 +685,14 @@ public class UsuarioService implements UserDetailsService {
     int nivel = 1;
     int xpAcumulada = 0;
 
+    System.out.println("🔍 Calculando nivel para XP total: " + experiencia);
+
     while (experiencia >= xpAcumulada + (nivel * 10)) {
       xpAcumulada += nivel * 10;
       nivel++;
     }
 
+    System.out.println("📈 Nivel calculado: " + nivel + " (XP acumulada: " + xpAcumulada + ")");
     return nivel;
   }
 
