@@ -60,7 +60,7 @@ public class OfertaController {
 
   @PostMapping
   public ResponseEntity<?> crearOferta(@RequestBody Oferta oferta, @RequestHeader("Authorization") String token) {
-    logger.info("📥 Recibiendo oferta en el backend: {}", oferta);
+    logger.info(" Recibiendo oferta en el backend: {}", oferta);
 
     String username = usuarioService.obtenerUsernameDesdeToken(token.replace("Bearer ", ""));
     Usuario comprador = usuarioService.obtenerUsuarioPorUsername(username);
@@ -135,11 +135,11 @@ public class OfertaController {
           .orElseThrow(() -> new RuntimeException("❌ Oferta no encontrada."));
 
       if (oferta.getEstado() == EstadoOferta.CONTRAOFERTA) {
-        ofertaService.aceptarContraoferta(oferta); // 🔥 NO devuelve boolean
+        ofertaService.aceptarContraoferta(oferta); // NO devuelve boolean
         return ResponseEntity.ok().build(); // ✅ solo status 200, sin texto
       }
 
-      ofertaService.aceptarOferta(id); // 🔥 NO devuelve boolean
+      ofertaService.aceptarOferta(id); // NO devuelve boolean
       return ResponseEntity.ok().build(); // ✅ lo mismo
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

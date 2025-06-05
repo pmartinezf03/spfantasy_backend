@@ -212,7 +212,7 @@ public class OfertaService {
 
     public List<Oferta> obtenerOfertasPorVendedorYLiga(Long vendedorId, Long ligaId) {
         List<Oferta> todas = ofertaRepository.findByVendedor_IdAndLiga_Id(vendedorId, ligaId);
-        System.out.println("📤 Ofertas crudas del vendedor " + vendedorId + ":");
+        System.out.println(" Ofertas crudas del vendedor " + vendedorId + ":");
         todas.forEach(o -> System.out.println("  ID: " + o.getId() + " | Estado: " + o.getEstado()));
 
         return todas.stream()

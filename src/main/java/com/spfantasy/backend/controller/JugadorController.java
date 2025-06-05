@@ -49,7 +49,7 @@ public class JugadorController {
     // ✅ Nuevo endpoint para obtener solo los jugadores disponibles en el mercado
     @GetMapping("/mercado")
     public List<JugadorDTO> obtenerJugadoresDisponibles() {
-        System.out.println("📤 Enviando lista de jugadores disponibles en el mercado.");
+        System.out.println(" Enviando lista de jugadores disponibles en el mercado.");
         return jugadorService.obtenerJugadoresDisponibles();
     }
 
@@ -93,10 +93,10 @@ public class JugadorController {
 
     @PostMapping("/recalcular-estadisticas")
     public ResponseEntity<String> recalcularEstadisticas() {
-        // 🧪 Generar nuevos datos simulados primero
+        //  Generar nuevos datos simulados primero
         statsFetcherService.actualizarDatosSimuladosParaTodosLosJugadores();
 
-        // 🔁 Luego recalcular rendimiento y precio con esos datos
+        //  Luego recalcular rendimiento y precio con esos datos
         jugadorService.recalcularEstadisticasParaTodos();
 
         return ResponseEntity.ok("✅ Estadísticas simuladas y recalculadas correctamente.");

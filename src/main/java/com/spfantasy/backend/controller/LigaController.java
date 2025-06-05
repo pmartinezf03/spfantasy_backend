@@ -43,7 +43,7 @@ public class LigaController {
         try {
             Liga liga = ligaService.crearLiga(dto.getNombre(), dto.getCodigoInvitacion(), dto.getCreadorId());
 
-            // 🔥 Devuelve un DTO que contiene la liga y un mensaje (como al unirse)
+            //  Devuelve un DTO que contiene la liga y un mensaje (como al unirse)
             LigaUnidaDTO respuesta = new LigaUnidaDTO(liga.getId(), liga.getNombre(),
                     "Liga creada y unido correctamente");
             return ResponseEntity.ok(respuesta);

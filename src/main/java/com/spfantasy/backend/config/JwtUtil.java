@@ -28,7 +28,7 @@ public class JwtUtil {
             parseToken(token);
             return true;
         } catch (JwtException e) {
-            System.out.println("🚨 Error validando token: " + e.getMessage());
+            System.out.println(" Error validando token: " + e.getMessage());
             return false;
         }
     }

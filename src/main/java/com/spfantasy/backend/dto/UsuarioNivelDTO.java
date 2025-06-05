@@ -13,17 +13,16 @@ public class UsuarioNivelDTO {
         this.experienciaTotal = usuario.getExperiencia();
         this.nivel = usuario.getNivel(); // nivel persistido real
 
-        // 🔧 Nueva lógica segura
+        // Nueva lógica segura
         this.experienciaParaSubir = nivel * 10;
 
         int acumulada = 0;
         for (int i = 1; i < nivel; i++)
             acumulada += i * 10;
 
-        // ⚠️ Evita negativos al reiniciar
         this.experienciaActualNivel = Math.max(0, experienciaTotal - acumulada);
 
-        // 💯 Porcentaje entre 0 y 100
+        // Porcentaje entre 0 y 100
         this.porcentajeProgreso = Math.min(100, (int) ((double) experienciaActualNivel / experienciaParaSubir * 100));
     }
 

@@ -26,6 +26,6 @@ public class JugadorStatsFetcherService {
         }
 
         jugadorRepository.saveAll(jugadores);
-        System.out.println("📊 Datos simulados actualizados en la tabla `jugadores`");
+        System.out.println(" Datos simulados actualizados en la tabla `jugadores`");
     }
 }

@@ -3,7 +3,6 @@ package com.spfantasy.backend.service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -87,7 +86,7 @@ public class LigaService {
 
         Liga ligaGuardada = ligaRepository.save(liga);
 
-        // 🔧 Asignar la liga al usuario y forzar persistencia inmediata
+        // Asignar la liga al usuario y forzar persistencia inmediata
         // ✅ Guardar la relación en usuarios_liga
         UsuarioLiga ul = new UsuarioLiga();
         ul.setUsuario(creador);
@@ -132,18 +131,18 @@ public class LigaService {
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        // 👉 Guardar la relación en UsuarioLiga
+        // Guardar la relación en UsuarioLiga
         UsuarioLiga ul = new UsuarioLiga();
         ul.setLiga(liga);
         ul.setUsuario(usuario);
         usuarioLigaRepository.save(ul);
 
-        // 👉 Guardar la relación en UsuarioLiga
+        // Guardar la relación en UsuarioLiga
         ul.setLiga(liga);
         ul.setUsuario(usuario);
         usuarioLigaRepository.save(ul);
 
-        // 👉 Repartir jugadores iniciales
+        // Repartir jugadores iniciales
         jugadorLigaService.repartirJugadoresIniciales(usuario, liga);
 
         // ✅ Buscar o crear grupo de chat de la liga
@@ -156,7 +155,7 @@ public class LigaService {
             grupo.setNombre(nombreGrupo);
             grupo.setDescripcion("Chat para la liga " + liga.getNombre());
             grupo.setCreador(liga.getCreador());
-            grupo.setUsuarios(new HashSet<>()); // Asegúrate que no sea null
+            grupo.setUsuarios(new HashSet<>());
         }
 
         // Añadir el usuario si no estaba
@@ -179,12 +178,6 @@ public class LigaService {
 
     @Transactional
     public void salirDeLaLiga(Long ligaId, Long usuarioId) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        Liga liga = ligaRepository.findById(ligaId)
-                .orElseThrow(() -> new RuntimeException("Liga no encontrada"));
-
         // Eliminar relación en UsuarioLiga
         usuarioLigaRepository.deleteByUsuarioIdAndLigaId(usuarioId, ligaId);
 

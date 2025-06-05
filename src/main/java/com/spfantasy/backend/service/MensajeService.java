@@ -51,19 +51,6 @@ public class MensajeService {
                         }
 
                         mensajeRepository.save(mensaje);
-
-                        // Emitir DTO por canal adecuado (igual que en el controller)
-                        MensajeDTO dto = convertirADTO(mensaje);
-
-                        if (grupoId != null) {
-                                messagingTemplate.convertAndSend("/chat/liga/" + grupoId, dto);
-                        } else if (mensaje.getRemitente().getAlias() != null && mensaje.getDestinatario() != null) {
-                                String canal = generarNombreCanal(
-                                                mensaje.getRemitente().getAlias(),
-                                                mensaje.getDestinatario().getAlias());
-                                messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
-                        }
-
                 } else if (destinatarioId != null) {
                         Usuario destinatario = usuarioRepository.findById(destinatarioId)
                                         .orElseThrow(() -> new RuntimeException("Usuario destinatario no encontrado"));
@@ -77,22 +64,26 @@ public class MensajeService {
                         }
 
                         mensajeRepository.save(mensaje);
-
-                        // Emitir DTO por canal adecuado (como en grupo)
-                        MensajeDTO dto = convertirADTO(mensaje);
-
-                        if (mensaje.getRemitente().getAlias() != null && mensaje.getDestinatario() != null) {
-                                String canal = generarNombreCanal(
-                                                mensaje.getRemitente().getAlias(),
-                                                mensaje.getDestinatario().getAlias());
-                                messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
-                        }
-
                 } else {
                         throw new RuntimeException("Debe especificarse un destinatario o un grupo");
                 }
 
+                // Emitir mensaje por WebSocket (grupo o privado)
+                MensajeDTO dto = convertirADTO(mensaje);
+                emitirMensajeWebSocket(mensaje, dto);
+
                 return mensaje;
+        }
+
+        private void emitirMensajeWebSocket(Mensaje mensaje, MensajeDTO dto) {
+                if (mensaje.getGrupo() != null) {
+                        messagingTemplate.convertAndSend("/chat/liga/" + mensaje.getGrupo().getId(), dto);
+                } else if (mensaje.getRemitente().getAlias() != null && mensaje.getDestinatario() != null) {
+                        String canal = generarNombreCanal(
+                                        mensaje.getRemitente().getAlias(),
+                                        mensaje.getDestinatario().getAlias());
+                        messagingTemplate.convertAndSend("/chat/privado/" + canal, dto);
+                }
         }
 
         public List<Mensaje> obtenerMensajesGrupo(Long grupoId) {
@@ -148,14 +139,14 @@ public class MensajeService {
                 Usuario usuario = usuarioRepository.findById(usuarioId)
                                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-                // 🔍 Mensajes privados donde es remitente o destinatario
+                // Mensajes privados donde es remitente o destinatario
                 List<Mensaje> privados = mensajeRepository
                                 .findTop500ByRemitenteOrDestinatarioOrderByTimestampDesc(usuario, usuario);
 
-                // 🔍 Obtener todos los grupos donde está este usuario
+                // Obtener todos los grupos donde está este usuario
                 List<GrupoChat> grupos = grupoChatRepository.findByUsuariosContaining(usuario);
 
-                // 🔍 Mensajes de los grupos a los que pertenece
+                // Mensajes de los grupos a los que pertenece
                 List<Mensaje> grupales = mensajeRepository.findTop500ByGrupoInOrderByTimestampDesc(grupos);
 
                 List<Mensaje> todos = new ArrayList<>();

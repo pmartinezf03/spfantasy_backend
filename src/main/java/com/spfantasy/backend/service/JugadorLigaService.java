@@ -136,7 +136,7 @@ public class JugadorLigaService {
             mapa.put(jugadorId, dto);
         }
 
-        // 🛒 Añadir compras directas del mercado libre que no estén en ofertas
+        // Añadir compras directas del mercado libre que no estén en ofertas
         List<JugadorLiga> jugadoresComprados = jugadorLigaRepository.findByLiga_IdAndPropietario_Id(ligaId, usuarioId);
 
         for (JugadorLiga jugador : jugadoresComprados) {
@@ -154,7 +154,6 @@ public class JugadorLigaService {
                         null);
                 mapa.put(jugadorId, dto);
             } else {
-                // Si ya existe, asegúrate de no perder datos previos de compra
                 HistorialTransaccionDTO dto = mapa.get(jugadorId);
                 if (dto.fechaCompra == null) {
                     dto.fechaCompra = jugador.getFechaAdquisicion();

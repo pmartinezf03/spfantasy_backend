@@ -22,7 +22,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private UsuarioDetailsService usuarioDetailsService; // 👈 servicio que carga el usuario por username
+    private UsuarioDetailsService usuarioDetailsService; // servicio que carga el usuario por username
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -54,11 +54,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             }
         }
 
-        // 🔁 Dejar que Spring Security decida si hace falta token o no
+        // Dejar que Spring Security decida si hace falta token o no
         chain.doFilter(request, response);
 
-        System.out.println("🔎 Petición a: " + request.getRequestURI());
-        System.out.println("🔐 Header: " + authHeader);
+        System.out.println(" Petición a: " + request.getRequestURI());
+        System.out.println(" Header: " + authHeader);
     }
 
 }

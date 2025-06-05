@@ -19,7 +19,7 @@ public class UsuarioEstadisticasService {
             usuario.setSesiones(usuario.getSesiones() + 1);
 
             // Actualizar racha
-            LocalDateTime ultimoLogin = usuario.getVipHasta(); // usa otro campo real si ya tienes `ultimoLogin`
+            LocalDateTime ultimoLogin = usuario.getVipHasta();
             LocalDateTime ahora = LocalDateTime.now();
 
             if (ultimoLogin != null && ultimoLogin.toLocalDate().plusDays(1).equals(ahora.toLocalDate())) {

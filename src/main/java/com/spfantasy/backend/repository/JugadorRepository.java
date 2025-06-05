@@ -13,7 +13,7 @@ import com.spfantasy.backend.model.Jugador;
 public interface JugadorRepository extends JpaRepository<Jugador, Long> {
     List<Jugador> findAll();
 
-    // 🔥 Método para obtener jugadores disponibles en el mercado
+    // Método para obtener jugadores disponibles en el mercado
     List<Jugador> findByDisponibleTrue();
 
     // ✅ Nuevo método para liberar un jugador, marcándolo como disponible y

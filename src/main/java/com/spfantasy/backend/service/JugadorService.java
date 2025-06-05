@@ -140,10 +140,10 @@ public class JugadorService {
     }
 
     public void actualizarJugadorDesdeApi(Jugador jugadorActualizado) {
-        // 🔁 Guardas el jugador actualizado
+        // Guardas el jugador actualizado
         jugadorRepository.save(jugadorActualizado);
 
-        // 🔁 Y propagas los cambios
+        // Y propagas los cambios
         jugadorLigaService.actualizarJugadoresLigaDesdeJugadorBase(jugadorActualizado);
     }
 

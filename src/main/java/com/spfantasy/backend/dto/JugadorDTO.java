@@ -5,7 +5,7 @@ import com.spfantasy.backend.model.Usuario;
 
 public class JugadorDTO {
 
-    private Long id; // Puedes usar este como id principal del DTO
+    private Long id;
     private Long idLiga; // <-- ID de JugadorLiga, importante para guardar plantilla
 
     private String nombre;

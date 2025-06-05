@@ -43,10 +43,10 @@ public class CodigoRecompensaService {
         HttpEntity<Map<String, Object>> loginRequest = new HttpEntity<>(payload, headers);
         ResponseEntity<String> loginResponse = restTemplate.postForEntity(loginUrl, loginRequest, String.class);
 
-        // 🔍 Logs para depurar
-        System.out.println("📥 Body completo recibido:");
+        // Logs para depurar
+        System.out.println(" Body completo recibido:");
         System.out.println(loginResponse.getBody());
-        System.out.println("📦 Cabeceras:");
+        System.out.println(" Cabeceras:");
         loginResponse.getHeaders().forEach((k, v) -> System.out.println(k + ": " + v));
 
         // 2. Obtener la cookie desde la cabecera
@@ -75,7 +75,7 @@ public class CodigoRecompensaService {
                 .queryParam("filters", "[[\"code\",\"=\",\"" + codigo + "\"]]")
                 .toUriString();
 
-        System.out.println("🔎 Consultando código: " + codigo);
+        System.out.println(" Consultando código: " + codigo);
         System.out.println("➡️ Endpoint: " + endpointUrl);
 
         HttpHeaders authHeaders = new HttpHeaders();
@@ -86,7 +86,7 @@ public class CodigoRecompensaService {
         ResponseEntity<Map> response = restTemplate.exchange(endpointUrl, HttpMethod.GET, request, Map.class);
 
         Map body = response.getBody();
-        System.out.println("📦 Respuesta recibida de Odoo:");
+        System.out.println(" Respuesta recibida de Odoo:");
         System.out.println(body);
 
         List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("result");
@@ -105,11 +105,11 @@ public class CodigoRecompensaService {
 
         Map<String, Object> resultado = new HashMap<>();
         resultado.put("codigo", codeData.get("code"));
-        resultado.put("usado", codeData.get("usado")); // ⚠ Asegúrate que es 'usado' en Odoo, no 'used'
+        resultado.put("usado", codeData.get("usado"));
         resultado.put("pedido_id", codeData.get("sale_order_id"));
         resultado.put("producto_id", codeData.get("product_id"));
 
-        System.out.println("🎁 Resultado entregado al frontend: " + resultado);
+        System.out.println(" Resultado entregado al frontend: " + resultado);
 
         return resultado;
     }

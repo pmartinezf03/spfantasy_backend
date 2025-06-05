@@ -22,7 +22,7 @@ public class ChatWebSocketController {
 
     @MessageMapping("/chat/enviar")
     public void procesarMensaje(MensajeDTO mensajeDTO) {
-        System.out.println("🟢 Mensaje recibido en /chat/enviar: " + mensajeDTO.getContenido());
+        System.out.println(" Mensaje recibido en /chat/enviar: " + mensajeDTO.getContenido());
 
         Long remitenteId = mensajeDTO.getRemitenteId();
         Long destinatarioId = mensajeDTO.getDestinatarioId();
@@ -51,18 +51,18 @@ public class ChatWebSocketController {
         if (grupoId != null) {
             destino = "/chat/liga/" + grupoId;
             messagingTemplate.convertAndSend(destino, dto);
-            System.out.println("📤 Enviado a GRUPO canal: " + destino);
+            System.out.println(" Enviado a GRUPO canal: " + destino);
         } else if (mensaje.getDestinatario() != null) {
             Long id1 = mensaje.getRemitente().getId();
             Long id2 = mensaje.getDestinatario().getId();
             String canal = id1 < id2 ? id1 + "-" + id2 : id2 + "-" + id1;
             destino = "/chat/privado/" + canal;
-            System.out.println("📤 Enviado a PRIVADO canal: " + destino);
+            System.out.println(" Enviado a PRIVADO canal: " + destino);
             messagingTemplate.convertAndSend(destino, dto);
         }
 
-        System.out.println("🟢 Mensaje recibido vía WebSocket: " + mensaje);
-        System.out.println("📤 Enviando a canal STOMP: " + destino);
+        System.out.println(" Mensaje recibido vía WebSocket: " + mensaje);
+        System.out.println(" Enviando a canal STOMP: " + destino);
 
     }
 

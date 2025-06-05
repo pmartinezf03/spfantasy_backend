@@ -29,7 +29,7 @@ public class JugadorLigaController {
         return ResponseEntity.ok(dtoList);
     }
 
-    // 🔹 Obtener los jugadores que tiene un usuario en una liga (su plantilla)
+    // Obtener los jugadores que tiene un usuario en una liga (su plantilla)
     @GetMapping("/mis-jugadores")
     public ResponseEntity<List<JugadorLigaDTO>> obtenerJugadoresDeUsuario(
             @RequestParam Long ligaId,

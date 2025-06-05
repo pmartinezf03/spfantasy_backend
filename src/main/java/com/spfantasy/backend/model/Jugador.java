@@ -43,7 +43,7 @@ public class Jugador {
     @JoinColumn(name = "propietario_id")
     private Usuario propietario;
 
-    // 🔥 Nuevas estadísticas
+    //  Nuevas estadísticas
     @Column(name = "pts")
     private Integer pts;
 

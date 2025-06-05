@@ -14,38 +14,38 @@ import java.util.List;
 @Repository
 public interface MensajeRepository extends JpaRepository<Mensaje, Long> {
 
-    // 🔥 Contar mensajes en un grupo
-    long countByGrupo(GrupoChat grupo);
+        // Contar mensajes en un grupo
+        long countByGrupo(GrupoChat grupo);
 
-    // 🔥 Contar mensajes entre dos usuarios
-    @Query("SELECT COUNT(m) FROM Mensaje m WHERE (m.remitente = :usuario1 AND m.destinatario = :usuario2) "
-            + "OR (m.remitente = :usuario2 AND m.destinatario = :usuario1)")
-    long countByUsuarios(Usuario usuario1, Usuario usuario2);
+        // Contar mensajes entre dos usuarios
+        @Query("SELECT COUNT(m) FROM Mensaje m WHERE (m.remitente = :usuario1 AND m.destinatario = :usuario2) "
+                        + "OR (m.remitente = :usuario2 AND m.destinatario = :usuario1)")
+        long countByUsuarios(Usuario usuario1, Usuario usuario2);
 
-    // ✅ Obtener los últimos 500 mensajes de un grupo
-    List<Mensaje> findTop500ByGrupoOrderByTimestampDesc(GrupoChat grupo);
+        // ✅ Obtener los últimos 500 mensajes de un grupo
+        List<Mensaje> findTop500ByGrupoOrderByTimestampDesc(GrupoChat grupo);
 
-    // ✅ Obtener los últimos 500 mensajes entre dos usuarios
-    List<Mensaje> findTop500ByRemitenteAndDestinatarioOrDestinatarioAndRemitenteOrderByTimestampDesc(
-            Usuario remitente1, Usuario destinatario1, Usuario remitente2, Usuario destinatario2);
+        // ✅ Obtener los últimos 500 mensajes entre dos usuarios
+        List<Mensaje> findTop500ByRemitenteAndDestinatarioOrDestinatarioAndRemitenteOrderByTimestampDesc(
+                        Usuario remitente1, Usuario destinatario1, Usuario remitente2, Usuario destinatario2);
 
-    // 🔥 Eliminar el mensaje más antiguo en un grupo
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM Mensaje m WHERE m.id = (SELECT m2.id FROM Mensaje m2 WHERE m2.grupo = :grupo ORDER BY m2.timestamp ASC LIMIT 1)")
-    void eliminarMasAntiguoDeGrupo(GrupoChat grupo);
+        // Eliminar el mensaje más antiguo en un grupo
+        @Transactional
+        @Modifying
+        @Query("DELETE FROM Mensaje m WHERE m.id = (SELECT m2.id FROM Mensaje m2 WHERE m2.grupo = :grupo ORDER BY m2.timestamp ASC LIMIT 1)")
+        void eliminarMasAntiguoDeGrupo(GrupoChat grupo);
 
-    // 🔥 Eliminar el mensaje más antiguo entre dos usuarios
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM Mensaje m WHERE m.id = (SELECT m2.id FROM Mensaje m2 WHERE "
-            + "(m2.remitente = :usuario1 AND m2.destinatario = :usuario2) OR "
-            + "(m2.remitente = :usuario2 AND m2.destinatario = :usuario1) "
-            + "ORDER BY m2.timestamp ASC LIMIT 1)")
-    void eliminarMasAntiguoEntreUsuarios(Usuario usuario1, Usuario usuario2);
+        // Eliminar el mensaje más antiguo entre dos usuarios
+        @Transactional
+        @Modifying
+        @Query("DELETE FROM Mensaje m WHERE m.id = (SELECT m2.id FROM Mensaje m2 WHERE "
+                        + "(m2.remitente = :usuario1 AND m2.destinatario = :usuario2) OR "
+                        + "(m2.remitente = :usuario2 AND m2.destinatario = :usuario1) "
+                        + "ORDER BY m2.timestamp ASC LIMIT 1)")
+        void eliminarMasAntiguoEntreUsuarios(Usuario usuario1, Usuario usuario2);
 
-    List<Mensaje> findTop500ByRemitenteOrDestinatarioOrderByTimestampDesc(Usuario r, Usuario d);
+        List<Mensaje> findTop500ByRemitenteOrDestinatarioOrderByTimestampDesc(Usuario r, Usuario d);
 
-    List<Mensaje> findTop500ByGrupoInOrderByTimestampDesc(List<GrupoChat> grupos);
+        List<Mensaje> findTop500ByGrupoInOrderByTimestampDesc(List<GrupoChat> grupos);
 
 }

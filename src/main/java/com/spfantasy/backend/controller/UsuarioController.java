@@ -180,7 +180,7 @@ public class UsuarioController {
         dto.setTitulares(titulares);
         dto.setSuplentes(suplentes);
 
-        System.out.println("📤 Enviando plantilla del usuario al frontend: " + dto);
+        System.out.println(" Enviando plantilla del usuario al frontend: " + dto);
         return ResponseEntity.ok(dto);
     }
 
@@ -203,7 +203,7 @@ public class UsuarioController {
     @PostMapping("/{username}/comprar")
     public ResponseEntity<Map<String, Object>> comprarJugador(@PathVariable String username,
             @RequestBody JugadorLiga jugadorRequest) {
-        System.out.println("📩 Recibido ID del jugador para compra: " + jugadorRequest.getId());
+        System.out.println(" Recibido ID del jugador para compra: " + jugadorRequest.getId());
 
         Optional<JugadorLiga> jugadorOpt = jugadorLigaRepository.findById(jugadorRequest.getId());
         if (jugadorOpt.isEmpty()) {
@@ -216,7 +216,7 @@ public class UsuarioController {
 
         JugadorLiga jugador = jugadorOpt.get();
         System.out.println(
-                "🎯 Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
+                " Intentando comprar el jugador: " + jugador.getNombre() + " | Precio: " + jugador.getPrecioVenta());
 
         boolean exito = usuarioService.comprarJugador(username, jugador);
         Usuario usuario = usuarioService.obtenerUsuarioPorUsername(username);
@@ -242,7 +242,7 @@ public class UsuarioController {
     public ResponseEntity<Map<String, Object>> venderJugador(@PathVariable String username,
             @RequestBody JugadorLiga jugador) {
 
-        System.out.println("🎯 Recibiendo solicitud para vender el jugador: " + jugador.getNombre() + " (ID: "
+        System.out.println(" Recibiendo solicitud para vender el jugador: " + jugador.getNombre() + " (ID: "
                 + jugador.getId() + ")");
 
         // ✅ Convertir Jugador → JugadorLiga
@@ -319,7 +319,7 @@ public class UsuarioController {
             @RequestParam Long jugadorLigaId,
             @RequestParam Long ligaId) {
 
-        System.out.println("📥 Compra directa de jugadorLigaId=" + jugadorLigaId + " en ligaId=" + ligaId);
+        System.out.println(" Compra directa de jugadorLigaId=" + jugadorLigaId + " en ligaId=" + ligaId);
 
         Map<String, Object> response = new HashMap<>();
         try {
@@ -371,9 +371,9 @@ public class UsuarioController {
             @PathVariable Long id,
             @RequestParam("avatar") MultipartFile file) {
         try {
-            System.out.println("🖼️ Recibiendo avatar para usuario ID: " + id);
-            System.out.println("📁 Nombre del archivo recibido: " + file.getOriginalFilename());
-            System.out.println("📏 Tamaño del archivo: " + file.getSize());
+            System.out.println("️ Recibiendo avatar para usuario ID: " + id);
+            System.out.println(" Nombre del archivo recibido: " + file.getOriginalFilename());
+            System.out.println(" Tamaño del archivo: " + file.getSize());
 
             if (file.isEmpty()) {
                 return ResponseEntity.badRequest().body("El archivo está vacío");
@@ -393,7 +393,7 @@ public class UsuarioController {
             return ResponseEntity.ok("Avatar guardado correctamente");
 
         } catch (Exception e) {
-            e.printStackTrace(); // 👈 imprime detalles del error
+            e.printStackTrace(); // imprime detalles del error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error al guardar avatar: " + e.getMessage());
         }
@@ -503,7 +503,7 @@ public class UsuarioController {
         }
 
         Usuario usuario = usuarioOpt.get();
-        System.out.println("📡 Marcando sobres como mostrados para usuario ID: " + usuarioId);
+        System.out.println(" Marcando sobres como mostrados para usuario ID: " + usuarioId);
 
         // Actualizamos la propiedad haVistoSobres
         usuario.setHaVistoSobres(true);
@@ -536,10 +536,10 @@ public class UsuarioController {
 
             System.out.println("✅ Usuario felicitado por nivel: " + usuario.getNivel());
         } else {
-            System.out.println("⚠️ Nivel ya felicitado anteriormente: " + usuario.getNivelFelicitado());
+            System.out.println("️ Nivel ya felicitado anteriormente: " + usuario.getNivelFelicitado());
         }
 
-        System.out.println("🧠 Nivel actual: " + usuario.getNivel() +
+        System.out.println(" Nivel actual: " + usuario.getNivel() +
                 " | Felicitado: " + usuario.getNivelFelicitado() +
                 " | XP total: " + usuario.getExperiencia());
 
@@ -560,7 +560,7 @@ public class UsuarioController {
             usuarioRepository.save(usuario);
             System.out.println("✅ Racha " + racha + " registrada para usuario ID " + id);
         } else {
-            System.out.println("⚠️ Racha " + racha + " ya estaba registrada");
+            System.out.println("️ Racha " + racha + " ya estaba registrada");
         }
 
         return ResponseEntity.ok().build();

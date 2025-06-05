@@ -4,7 +4,6 @@ import com.spfantasy.backend.model.GrupoChat;
 import com.spfantasy.backend.model.Usuario;
 import com.spfantasy.backend.model.UsuarioLiga;
 import com.spfantasy.backend.repository.GrupoChatRepository;
-import com.spfantasy.backend.repository.LigaRepository;
 import com.spfantasy.backend.repository.UsuarioLigaRepository;
 import com.spfantasy.backend.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +23,6 @@ public class GrupoChatService {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private LigaRepository ligaRepository;
 
     @Autowired
     private UsuarioLigaRepository usuarioLigaRepository;

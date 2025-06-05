@@ -28,8 +28,6 @@ import org.springframework.stereotype.Service;
 
 import com.spfantasy.backend.config.JwtUtil;
 import com.spfantasy.backend.dto.CodigoRecompensaResponse;
-import com.spfantasy.backend.dto.JugadorDTO;
-import com.spfantasy.backend.dto.UsuarioConPlantillaDTO;
 import com.spfantasy.backend.dto.UsuarioDTO;
 import com.spfantasy.backend.model.JugadorLiga;
 import com.spfantasy.backend.model.Liga;
@@ -63,9 +61,6 @@ public class UsuarioService implements UserDetailsService {
   private JugadorLigaRepository jugadorLigaRepository;
 
   @Autowired
-  private JugadorLigaService jugadorLigaService;
-
-  @Autowired
   private TransaccionService transaccionService;
 
   @Autowired
@@ -90,7 +85,7 @@ public class UsuarioService implements UserDetailsService {
     Optional<Usuario> usuarioOpt = usuarioRepository.findByUsernameWithPlantilla(username);
     if (usuarioOpt.isPresent()) {
       Usuario usuario = usuarioOpt.get();
-      System.out.println("🔍 Jugadores en la plantilla del usuario " + username + ": " + usuario.getPlantilla());
+      System.out.println(" Jugadores en la plantilla del usuario " + username + ": " + usuario.getPlantilla());
       return usuario;
     }
     return null;
@@ -178,7 +173,7 @@ public class UsuarioService implements UserDetailsService {
     jugadorLigaRepository.save(jugador);
     aumentarExperiencia(usuario.getId(), 5);
 
-    // 🔥 Registrar transacción (compra directa)
+    // Registrar transacción (compra directa)
     Transaccion transaccion = new Transaccion();
     transaccion.setFecha(LocalDateTime.now());
     transaccion.setJugador(jugador);
@@ -237,7 +232,7 @@ public class UsuarioService implements UserDetailsService {
     Usuario usuario = usuarioRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
-    // ⚠️ Devuelve un UserDetails con contraseña vacía (solo para pruebas)
+    // ️ Devuelve un UserDetails con contraseña vacía (solo para pruebas)
     return new org.springframework.security.core.userdetails.User(
         usuario.getUsername(),
         "", // <- contraseña vacía
@@ -311,8 +306,7 @@ public class UsuarioService implements UserDetailsService {
 
   public List<UsuarioDTO> obtenerTodosComoDTO() {
     return usuarioRepository.findAll().stream()
-        .map(UsuarioDTO::new) // ✅ Usa el constructor que recibe Usuario
-        .toList();
+        .map(UsuarioDTO::new).toList();
   }
 
   public Usuario guardarUsuario(Usuario usuario) {
@@ -322,8 +316,8 @@ public class UsuarioService implements UserDetailsService {
   public Usuario obtenerUsuarioPorId(Long id) {
     Usuario usuario = usuarioRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    System.out.println("🧾 [UsuarioService] Dinero actual: " + usuario.getDinero());
-    System.out.println("🧾 [UsuarioService] Dinero pendiente: " + usuario.getDineroPendiente());
+    System.out.println(" [UsuarioService] Dinero actual: " + usuario.getDinero());
+    System.out.println(" [UsuarioService] Dinero pendiente: " + usuario.getDineroPendiente());
 
     return usuario;
   }
@@ -469,7 +463,7 @@ public class UsuarioService implements UserDetailsService {
 
       HttpResponse<String> codigosResponse = client.send(codigosRequest, HttpResponse.BodyHandlers.ofString());
       JSONObject json = new JSONObject(codigosResponse.body());
-      System.out.println("🔍 Respuesta de Odoo para código: " + json.toString(2));
+      System.out.println(" Respuesta de Odoo para código: " + json.toString(2));
 
       // Obtener resultados del JSON de Odoo
       JSONArray resultados = json.getJSONArray("result");
@@ -492,7 +486,7 @@ public class UsuarioService implements UserDetailsService {
 
       if (codeInfo.getBoolean("used")) {
         respuesta.setValido(false);
-        respuesta.setMensaje("⚠️ Código ya fue usado.");
+        respuesta.setMensaje("️ Código ya fue usado.");
         return respuesta;
       }
 
@@ -513,7 +507,7 @@ public class UsuarioService implements UserDetailsService {
           respuesta.setMensaje("✅ ¡Has recibido " + valor + " monedas!");
           break;
         default:
-          respuesta.setMensaje("⚠️ Recompensa no reconocida.");
+          respuesta.setMensaje("️ Recompensa no reconocida.");
       }
 
       usuarioRepository.save(usuario);
@@ -565,7 +559,7 @@ public class UsuarioService implements UserDetailsService {
     int nivelActual = 1;
     int xpAcumulada = 0;
 
-    // 🧠 Calculamos a qué nivel corresponde la experiencia actual
+    // Calculamos a qué nivel corresponde la experiencia actual
     while (experiencia >= xpAcumulada + (nivelActual * 10)) {
       xpAcumulada += nivelActual * 10;
       nivelActual++;
@@ -576,7 +570,7 @@ public class UsuarioService implements UserDetailsService {
       usuario.setNivel(nivelActual);
       usuarioRepository.save(usuario);
     } else {
-      System.out.println("⚠️ Usuario ya está en su nivel correspondiente: " + nivelActual);
+      System.out.println("️ Usuario ya está en su nivel correspondiente: " + nivelActual);
     }
 
     return usuario;
@@ -620,9 +614,9 @@ public class UsuarioService implements UserDetailsService {
     int nivelCalculado = calcularNivelDesdeExperiencia(nuevaXP);
 
     if (nivelCalculado > nivelAnterior) {
-      System.out.println("🎉 ¡Usuario ha subido de nivel! " + nivelAnterior + " → " + nivelCalculado);
+      System.out.println(" ¡Usuario ha subido de nivel! " + nivelAnterior + " → " + nivelCalculado);
     } else {
-      System.out.println("🧪 Usuario no sube de nivel. Nivel actual: " + nivelAnterior + " | XP total: " + nuevaXP);
+      System.out.println(" Usuario no sube de nivel. Nivel actual: " + nivelAnterior + " | XP total: " + nuevaXP);
     }
 
     usuario.setNivel(nivelCalculado);
@@ -653,29 +647,29 @@ public class UsuarioService implements UserDetailsService {
 
     // Dinero
     if (usuario.getDinero().compareTo(new BigDecimal("5000000")) > 0) {
-      consejos.add("💰 Tienes más de 5 millones sin gastar. ¡Aprovecha el mercado!");
+      consejos.add(" Tienes más de 5 millones sin gastar. ¡Aprovecha el mercado!");
     }
 
     // Plantilla incompleta
     if (titulares.size() < 5) {
-      consejos.add("📋 Tienes menos de 5 titulares. Alinea un equipo completo para puntuar.");
+      consejos.add(" Tienes menos de 5 titulares. Alinea un equipo completo para puntuar.");
     }
 
     // Suplentes excesivos
     if (suplentes.size() > 5) {
-      consejos.add("🔁 Tienes demasiados suplentes. Considera vender alguno para fichar mejores titulares.");
+      consejos.add(" Tienes demasiados suplentes. Considera vender alguno para fichar mejores titulares.");
     }
 
     // VIP
     if (usuario.getRole().name().equalsIgnoreCase("VIP")) {
-      consejos.add("🏆 Eres VIP. Recuerda usar el análisis exclusivo del scouting.");
+      consejos.add(" Eres VIP. Recuerda usar el análisis exclusivo del scouting.");
     }
 
     // Bajo rendimiento
     boolean algunoConBajaMedia = titulares.stream()
         .anyMatch(j -> j.getFp() != null && j.getFp() < 10);
     if (algunoConBajaMedia) {
-      consejos.add("⚠️ Algunos titulares tienen bajo rendimiento. Mira sus estadísticas y considera cambios.");
+      consejos.add("️ Algunos titulares tienen bajo rendimiento. Mira sus estadísticas y considera cambios.");
     }
 
     return consejos;
@@ -685,14 +679,14 @@ public class UsuarioService implements UserDetailsService {
     int nivel = 1;
     int xpAcumulada = 0;
 
-    System.out.println("🔍 Calculando nivel para XP total: " + experiencia);
+    System.out.println(" Calculando nivel para XP total: " + experiencia);
 
     while (experiencia >= xpAcumulada + (nivel * 10)) {
       xpAcumulada += nivel * 10;
       nivel++;
     }
 
-    System.out.println("📈 Nivel calculado: " + nivel + " (XP acumulada: " + xpAcumulada + ")");
+    System.out.println(" Nivel calculado: " + nivel + " (XP acumulada: " + xpAcumulada + ")");
     return nivel;
   }
 

@@ -47,7 +47,7 @@ public class JugadorLigaDTO {
 
     }
 
-    // 🔽 Getters y Setters igual que antes, no hace falta repetir aquí
+    // Getters y Setters igual que antes, no hace falta repetir aquí
 
     // Getters y Setters
 

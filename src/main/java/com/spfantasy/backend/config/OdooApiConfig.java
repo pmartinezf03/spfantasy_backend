@@ -49,9 +49,9 @@ public class OdooApiConfig {
     }
 
     public HttpHeaders authenticate() {
-        // ⚠️ Solo para pruebas
+        // ️ Solo para pruebas
         String sessionId = "3bcdb50e1e9763cb20d842c4996e858f8c6257ba";
-        System.out.println("⚠️ Usando session_id fijo para pruebas: " + sessionId);
+        System.out.println("️ Usando session_id fijo para pruebas: " + sessionId);
 
         HttpHeaders authHeaders = new HttpHeaders();
         authHeaders.set("Cookie", "session_id=" + sessionId);
