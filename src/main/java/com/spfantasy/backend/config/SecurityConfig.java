@@ -37,7 +37,7 @@ public class SecurityConfig {
                                 "/api/usuarios/registro",
                                 "/api/usuarios/*/avatar")
                         .permitAll()
-                        .requestMatchers("/api/**").authenticated() //  Proteger lo demás
+                        .requestMatchers("/api/**").authenticated() // Proteger lo demás
                         .anyRequest().permitAll())
 
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
