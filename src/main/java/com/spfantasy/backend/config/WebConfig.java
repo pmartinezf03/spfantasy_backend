@@ -17,7 +17,7 @@ public class WebConfig {
                         .allowedOrigins(
                                 "http://localhost",
                                 "http://localhost:4200",
-                                "http://52.54.248.252")
+                                "http://3.86.92.239")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true);

@@ -51,7 +51,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
                 "http://localhost",
                 "http://localhost:4200",
-                "http://52.54.248.252",
+                "http://3.86.92.239",
                 "/api/codigos/**"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

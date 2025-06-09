@@ -429,10 +429,10 @@ public class UsuarioService implements UserDetailsService {
   public CodigoRecompensaResponse validarYAplicarCodigo(String username, String codigo) {
     CodigoRecompensaResponse respuesta = new CodigoRecompensaResponse();
 
-    String urlLogin = "http://52.54.248.252:8069/auth/";
+    String urlLogin = "http://3.86.92.239:8069/auth/";
     String filters = "[[\"code\", \"=\", \"" + codigo + "\"], [\"used\", \"=\", false]]";
     String filtersCodificados = URLEncoder.encode(filters, StandardCharsets.UTF_8);
-    String urlCodigos = "http://52.54.248.252:8069/api/codigo.recompensa/?filters=" + filtersCodificados;
+    String urlCodigos = "http://3.86.92.239:8069/api/codigo.recompensa/?filters=" + filtersCodificados;
 
     try {
       HttpClient client = HttpClient.newHttpClient();
@@ -525,7 +525,7 @@ public class UsuarioService implements UserDetailsService {
           """;
 
       HttpRequest putRequest = HttpRequest.newBuilder()
-          .uri(URI.create("http://52.54.248.252:8069/api/codigo.recompensa/" + id + "/"))
+          .uri(URI.create("http://3.86.92.239:8069/api/codigo.recompensa/" + id + "/"))
           .header("Content-Type", "application/json")
           .header("Cookie", cookie)
           .PUT(HttpRequest.BodyPublishers.ofString(markUsedJson))
