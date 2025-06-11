@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/codigos/**", // ✅ PERMITIR esto
+                                "/api/codigos/**",
                                 "/api/usuarios/login",
                                 "/api/usuarios/registro",
                                 "/api/usuarios/*/avatar")
@@ -52,7 +52,7 @@ public class SecurityConfig {
                 "http://localhost",
                 "http://localhost:4200",
                 "http://3.86.92.239",
-                "/api/codigos/**"));
+                "http://spfantasy-s3.s3-website-us-east-1.amazonaws.com"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

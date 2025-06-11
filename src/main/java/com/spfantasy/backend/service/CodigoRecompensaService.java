@@ -124,7 +124,9 @@ public class CodigoRecompensaService {
         // Buscar código
         String searchUrl = UriComponentsBuilder.fromHttpUrl(odooBaseUrl + "/api/codigo.recompensa")
                 .queryParam("filters", "[[\"code\",\"=\",\"" + codigo + "\"]]")
+                .queryParam("query", "{id, code, product_id, sale_order_id, usado}")
                 .toUriString();
+
         System.out.println("➡️ [SERVICE] Consultando código en: " + searchUrl);
 
         HttpHeaders headers = new HttpHeaders();
@@ -143,7 +145,10 @@ public class CodigoRecompensaService {
             return false;
         }
 
-        Map<String, Object> resultado = resultados.get(0);
+        Map<String, Object> resultado = resultados.stream()
+                .filter(r -> codigo.equals(r.get("code")))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("❌ Código no encontrado en los resultados"));
         System.out.println("✅ [SERVICE] Código encontrado: " + resultado);
 
         if (Boolean.TRUE.equals(resultado.get("usado"))) {
@@ -152,14 +157,15 @@ public class CodigoRecompensaService {
         }
 
         Integer id = (Integer) resultado.get("id");
-        String productName = ((List<Object>) resultado.get("product_id")).get(1).toString();
-        System.out.println("📦 [SERVICE] ID del código: " + id + " | Producto: " + productName);
+        Object productIdObj = resultado.get("product_id");
+        String productName = productIdObj != null ? productIdObj.toString() : "";
 
-        // Recompensa según producto
-        if (productName.equalsIgnoreCase("10.000.000 Monedas")) {
-            System.out.println("🪙 [SERVICE] Se entregarían 10.000.000 monedas aquí");
-        } else if (productName.equalsIgnoreCase("Membresía VIP (1 mes)")) {
+        System.out.println("📦 [SERVICE] Producto recibido: " + productName);
+
+        if (productName.contains("VIP")) {
             System.out.println("🎟️ [SERVICE] Se activaría membresía VIP aquí");
+        } else if (productName.contains("Monedas")) {
+            System.out.println("🪙 [SERVICE] Se entregarían monedas aquí");
         } else {
             System.out.println("❌ [SERVICE] Producto no reconocido: " + productName);
             return false;
@@ -167,9 +173,13 @@ public class CodigoRecompensaService {
 
         // Marcar como usado
         String putUrl = odooBaseUrl + "/api/codigo.recompensa/" + id;
-        Map<String, Object> data = Map.of("params", Map.of("data", Map.of("usado", true)));
+        Map<String, Object> params = new HashMap<>();
+        params.put("data", Map.of("usado", true));
 
-        HttpEntity<Map<String, Object>> putRequest = new HttpEntity<>(data, headers);
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("params", params);
+
+        HttpEntity<Map<String, Object>> putRequest = new HttpEntity<>(requestBody, headers);
         ResponseEntity<Map> putResponse = new RestTemplate().exchange(putUrl, HttpMethod.PUT, putRequest, Map.class);
 
         System.out.println("📨 [SERVICE] PUT response: " + putResponse.getBody());
